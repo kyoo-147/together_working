@@ -13,7 +13,10 @@ Minimal rules:
 
 Primary outputs:
 - `.together/cache/agent-registry.json`
+- `.together/cache/last-known-good.json`
+- `.together/cache/runtime-state.json`
 - `.together/reports/agent-report.md`
+- `.together/providers.override.json`
 
 Status buckets:
 - `not-installed`

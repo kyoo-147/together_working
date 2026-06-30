@@ -1,0 +1,11 @@
+{
+  "version": "0.3.0",
+  "providers": {},
+  "routing": {
+    "tasks": {},
+    "departments": {}
+  },
+  "runtime": {
+    "cooldown_seconds": 900
+  }
+}

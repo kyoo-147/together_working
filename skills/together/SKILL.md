@@ -32,22 +32,24 @@ Skip for tiny one-shot tasks.
 
 ## Core rules
 
-1. Codex stays PM and final integrator.
+1. Codex stays planner, coordinator, verifier, and final integrator.
 2. Route by readiness first, then task fit.
 3. Known Providers != Installed CLIs != Ready Agents.
 4. Health checks must stay lightweight.
 5. External execution stays approval-gated.
 6. If all workers fail, Codex takes over if practical.
 7. If work must pause, write resume context.
+8. Respect local override and cooldown state.
 
 ## Quick flow
 
 1. Run registry doctor if current readiness unknown.
 2. Read cache/report.
-3. Map task into hints: `vision`, `backend`, `frontend`, `research`, `review`, `docs`, `shell`, `short_task`, `long_task`, `multi_file`.
+3. Map task into hints: `vision`, `backend`, `frontend`, `research`, `review`, `verification`, `docs`, `shell`, `short_task`, `long_task`, `multi_file`.
 4. Pick ready worker from department order.
-5. Keep fallback path ready.
-6. Integrate back into Codex.
+5. Check cooldown and degraded state before dispatch.
+6. Keep fallback path ready.
+7. Integrate back into Codex.
 
 ## Commands
 

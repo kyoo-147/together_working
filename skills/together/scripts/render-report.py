@@ -42,6 +42,7 @@ def render_summary(snapshot: dict) -> list[str]:
         f"| Installed CLIs | {summary['installed_clis']} |",
         f"| Ready Agents | {summary['ready_agents']} |",
         f"| Broken Agents | {summary['broken_agents']} |",
+        f"| Degraded Agents | {summary['degraded_agents']} |",
         "",
     ]
 
@@ -99,7 +100,7 @@ def render_ready(snapshot: dict) -> list[str]:
 
 
 def render_broken(snapshot: dict) -> list[str]:
-    broken = [provider for provider in snapshot["providers"] if provider["installed"] and not provider["ready"]]
+    broken = [provider for provider in snapshot["providers"] if provider["installed"] and not provider["health_ready"]]
     lines = [
         "## Broken Agents",
         "",
@@ -112,6 +113,84 @@ def render_broken(snapshot: dict) -> list[str]:
         for provider in broken:
             lines.append(f"| {provider['display_name']} | {provider['status']} | {provider['status_reason']} |")
     lines.append("")
+    return lines
+
+
+def render_best_available(snapshot: dict) -> list[str]:
+    workers = snapshot["routing"]["best_available_workers"]
+    lines = [
+        "## Best Available Workers",
+        "",
+        "| Rank | Agent | Best Hints | Departments |",
+        "|---:|---|---|---|",
+    ]
+    if not workers:
+        lines.append("| 1 | - | - | - |")
+    else:
+        for index, worker in enumerate(workers, start=1):
+            lines.append(
+                f"| {index} | {worker['display_name']} | {join_or_dash(worker['best_hints'])} | {join_or_dash(worker['departments'])} |"
+            )
+    lines.append("")
+    return lines
+
+
+def render_best_by_task(snapshot: dict) -> list[str]:
+    lines = [
+        "## Best By Task",
+        "",
+        "| Task | Best Worker | Alternatives |",
+        "|---|---|---|",
+    ]
+    for task, details in snapshot["routing"]["best_by_task"].items():
+        lines.append(
+            f"| {task} | {details['display_name'] or '-'} | {join_or_dash(details['alternative_display_names'])} |"
+        )
+    lines.append("")
+    return lines
+
+
+def render_degraded(snapshot: dict) -> list[str]:
+    degraded = [provider for provider in snapshot["providers"] if provider["degraded"]]
+    lines = [
+        "## Degraded Agents",
+        "",
+        "| Agent | Routing Status | Cooldown Until | Reason |",
+        "|---|---|---|---|",
+    ]
+    if not degraded:
+        lines.append("| - | - | - | - |")
+    else:
+        for provider in degraded:
+            lines.append(
+                f"| {provider['display_name']} | {provider['routing_status']} | {provider['cooldown_until'] or '-'} | {provider['routing_reason']} |"
+            )
+    lines.append("")
+    return lines
+
+
+def render_last_known_good(snapshot: dict) -> list[str]:
+    record = snapshot.get("last_known_good")
+    lines = [
+        "## Last Known Good",
+        "",
+    ]
+    if not record:
+        lines.extend(["No healthy snapshot stored yet.", ""])
+        return lines
+
+    summary = record["summary"]
+    ready_agents = [item["display_name"] for item in record.get("ready_agents", [])]
+    lines.extend(
+        [
+            f"- Timestamp: `{record['timestamp']}`",
+            f"- Ready Agents: {summary['ready_agents']}",
+            f"- Broken Agents: {summary['broken_agents']}",
+            f"- Degraded Agents: {summary.get('degraded_agents', 0)}",
+            f"- Workers: {join_or_dash(ready_agents, 6)}",
+            "",
+        ]
+    )
     return lines
 
 
@@ -151,7 +230,7 @@ def render_report(snapshot: dict) -> str:
         "",
         f"Generated: `{snapshot['generated_at']}`",
         "",
-        "Codex role: PM, control plane, final integrator.",
+        f"Codex role: {', '.join(snapshot['codex_role'])}.",
         "",
     ]
     sections = [
@@ -160,8 +239,12 @@ def render_report(snapshot: dict) -> str:
         render_installed(snapshot),
         render_ready(snapshot),
         render_broken(snapshot),
+        render_best_available(snapshot),
+        render_best_by_task(snapshot),
+        render_degraded(snapshot),
         render_tasks(snapshot),
         render_departments(snapshot),
+        render_last_known_good(snapshot),
     ]
     for section in sections:
         lines.extend(section)

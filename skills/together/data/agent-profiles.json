@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "notes": [
     "Registry is hint-only. No benchmark claims.",
     "Known Providers count reflects ecosystem coverage, not local installation.",
@@ -83,8 +83,8 @@
       "display_name": "Claude Code",
       "commands": ["claude", "claude-code"],
       "lightweight_checks": [["--help"], ["--version"]],
-      "capability_hints": ["research", "review", "docs", "long_task", "multi_file"],
-      "departments": ["planning", "research", "review"],
+      "capability_hints": ["research", "review", "verification", "docs", "long_task", "multi_file"],
+      "departments": ["planning", "research", "review", "verification"],
       "confidence": "high"
     },
     {
@@ -119,8 +119,8 @@
       "display_name": "OpenAI Codex CLI",
       "commands": ["codex"],
       "lightweight_checks": [["--help"], ["--version"]],
-      "capability_hints": ["backend", "frontend", "review", "docs", "shell", "long_task", "multi_file"],
-      "departments": ["planning", "engineering", "review"],
+      "capability_hints": ["backend", "frontend", "review", "verification", "docs", "shell", "long_task", "multi_file"],
+      "departments": ["planning", "engineering", "review", "verification"],
       "confidence": "high"
     },
     {
@@ -128,8 +128,8 @@
       "display_name": "Command Code",
       "commands": ["cmdc", "command-code"],
       "lightweight_checks": [["--help"], ["--version"], ["status"]],
-      "capability_hints": ["vision", "backend", "frontend", "review", "docs", "shell", "long_task", "multi_file"],
-      "departments": ["vision", "engineering", "review"],
+      "capability_hints": ["vision", "backend", "frontend", "review", "verification", "docs", "shell", "long_task", "multi_file"],
+      "departments": ["vision", "engineering", "review", "verification"],
       "confidence": "high"
     },
     {

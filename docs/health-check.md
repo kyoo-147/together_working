@@ -22,3 +22,8 @@ States:
 - `permission-denied`
 - `installed-but-broken`
 - `installed-unknown`
+
+Runtime routing can still downgrade a healthy agent temporarily when:
+- it failed recently
+- it is inside cooldown
+- local override disables it

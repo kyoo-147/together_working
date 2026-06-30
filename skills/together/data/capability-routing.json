@@ -1,8 +1,11 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "codex_role": [
     "PM",
     "control-plane",
+    "planner",
+    "coordinator",
+    "verifier",
     "final-integrator"
   ],
   "task_routing": {
@@ -29,6 +32,10 @@
     "review": {
       "preferred": ["claude", "codex", "cmdc"],
       "fallback": "any ready agent with review hints"
+    },
+    "verification": {
+      "preferred": ["codex", "claude", "cmdc"],
+      "fallback": "any ready agent with verification, review, or docs hints"
     },
     "docs": {
       "preferred": ["claude", "gemini", "cmdc"],
@@ -57,6 +64,7 @@
     "vision": ["gemini", "cmdc", "kimi-code"],
     "engineering": ["codex", "cmdc", "amp", "opencode"],
     "review": ["claude", "codex", "cmdc"],
+    "verification": ["codex", "claude", "cmdc"],
     "fallback": []
   }
 }

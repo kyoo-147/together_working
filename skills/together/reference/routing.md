@@ -11,6 +11,7 @@ Task hints:
 - `frontend`
 - `research`
 - `review`
+- `verification`
 - `docs`
 - `shell`
 - `short_task`
@@ -23,10 +24,12 @@ Department preference:
 - Vision -> `gemini`, `cmdc`, `kimi-code`
 - Engineering -> `codex`, `cmdc`, `amp`, `opencode`
 - Review -> `claude`, `codex`, `cmdc`
+- Verification -> `codex`, `claude`, `cmdc`
 
 Routing law:
 - ready first
 - capability fit second
 - fallback always
+- cooldown-aware
 
 Codex still owns batch plan and final integration.

@@ -1,12 +1,62 @@
 {
-  "capabilities": {
-    "planning": ["cmdc", "claude", "codex-cli"],
-    "research-web": ["agy", "gemini-cli", "cmdc"],
-    "vision": ["cmdc", "gemini-cli", "kimi-code-cli"],
-    "code-implementation": ["cmdc", "agy", "codex-cli", "qwen-code"],
-    "code-review": ["cmdc", "claude", "agy", "codex-cli"],
-    "verification": ["cmdc", "claude", "codex-cli"],
-    "tool-execution": ["agy", "cmdc"],
-    "long-context-synthesis": ["cmdc", "claude", "qwen-code", "kimi-code-cli"]
+  "version": "0.2.0",
+  "codex_role": [
+    "PM",
+    "control-plane",
+    "final-integrator"
+  ],
+  "task_routing": {
+    "planning": {
+      "preferred": ["codex", "claude"],
+      "fallback": "any ready agent with docs or long_task hints"
+    },
+    "vision": {
+      "preferred": ["gemini", "cmdc", "kimi-code"],
+      "fallback": "any ready agent with vision hints"
+    },
+    "backend": {
+      "preferred": ["codex", "cmdc", "amp", "opencode"],
+      "fallback": "any ready agent with backend hints"
+    },
+    "frontend": {
+      "preferred": ["codex", "cmdc", "amp", "opencode"],
+      "fallback": "any ready agent with frontend hints"
+    },
+    "research": {
+      "preferred": ["gemini", "agy", "claude"],
+      "fallback": "any ready agent with research hints"
+    },
+    "review": {
+      "preferred": ["claude", "codex", "cmdc"],
+      "fallback": "any ready agent with review hints"
+    },
+    "docs": {
+      "preferred": ["claude", "gemini", "cmdc"],
+      "fallback": "any ready agent with docs hints"
+    },
+    "shell": {
+      "preferred": ["agy", "codex", "amp"],
+      "fallback": "any ready agent with shell hints"
+    },
+    "short_task": {
+      "preferred": ["agy", "amp", "cmdc"],
+      "fallback": "any ready agent with short_task hints"
+    },
+    "long_task": {
+      "preferred": ["claude", "codex", "cmdc", "qwen-code"],
+      "fallback": "any ready agent with long_task hints"
+    },
+    "multi_file": {
+      "preferred": ["codex", "cmdc", "opencode", "claude"],
+      "fallback": "any ready agent with multi_file hints"
+    }
+  },
+  "departments": {
+    "planning": ["codex", "claude"],
+    "research": ["gemini", "agy", "claude"],
+    "vision": ["gemini", "cmdc", "kimi-code"],
+    "engineering": ["codex", "cmdc", "amp", "opencode"],
+    "review": ["claude", "codex", "cmdc"],
+    "fallback": []
   }
 }

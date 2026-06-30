@@ -1,123 +1,442 @@
 {
-  "agents": [
+  "version": "0.2.0",
+  "notes": [
+    "Registry is hint-only. No benchmark claims.",
+    "Known Providers count reflects ecosystem coverage, not local installation.",
+    "Capability hints are conservative and editable."
+  ],
+  "providers": [
     {
-      "id": "cmdc",
-      "display_name": "Command Code",
-      "commands": ["cmdc", "command-code"],
-      "preferred_checks": [
-        ["--help"],
-        ["--version"],
-        ["--list-models"],
-        ["status"]
-      ],
-      "capabilities": ["planning", "vision", "code-implementation", "code-review", "verification", "long-context-synthesis"],
-      "strengths": ["many models", "vision-capable options", "good for synthesis", "good for code and review"],
-      "weaknesses": ["depends on configured model access", "may vary by account state"],
-      "recommended_tasks": ["vision", "long-context-synthesis", "code-review", "code-implementation"]
+      "id": "aider",
+      "display_name": "Aider",
+      "commands": ["aider"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "shell", "short_task", "multi_file"],
+      "departments": ["engineering"],
+      "confidence": "high"
     },
     {
-      "id": "agy",
-      "display_name": "Antigravity CLI",
-      "commands": ["agy"],
-      "preferred_checks": [
-        ["--help"],
-        ["models"]
-      ],
-      "capabilities": ["research-web", "code-implementation", "code-review", "tool-execution"],
-      "strengths": ["bounded worker tasks", "good sidecar CLI", "simple scoped execution"],
-      "weaknesses": ["not the best control plane", "model access varies"],
-      "recommended_tasks": ["research-web", "tool-execution", "scoped implementation", "scoped audit"]
-    },
-    {
-      "id": "claude",
-      "display_name": "Claude CLI",
-      "commands": ["claude", "claude-code"],
-      "preferred_checks": [
-        ["--help"],
-        ["--version"]
-      ],
-      "capabilities": ["planning", "code-review", "verification", "long-context-synthesis"],
-      "strengths": ["reasoning-heavy tasks", "spec review", "critique"],
-      "weaknesses": ["availability varies by install"],
-      "recommended_tasks": ["planning", "review", "verification", "synthesis"]
-    },
-    {
-      "id": "codex-cli",
-      "display_name": "OpenAI Codex CLI",
-      "commands": ["codex"],
-      "preferred_checks": [
-        ["--help"],
-        ["--version"]
-      ],
-      "capabilities": ["planning", "code-implementation", "code-review", "verification"],
-      "strengths": ["coding-oriented CLI", "good fallback for code tasks"],
-      "weaknesses": ["local install may be missing or unconfigured"],
-      "recommended_tasks": ["code-implementation", "review", "verification"]
+      "id": "aider-desk",
+      "display_name": "Aider Desk",
+      "commands": ["aider-desk"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "docs", "multi_file"],
+      "departments": ["engineering"],
+      "confidence": "low"
     },
     {
       "id": "amp",
       "display_name": "Amp CLI",
       "commands": ["amp"],
-      "preferred_checks": [
-        ["--help"],
-        ["--version"]
-      ],
-      "capabilities": ["code-implementation", "code-review"],
-      "strengths": ["generic coding worker"],
-      "weaknesses": ["profile confidence is low without local validation"],
-      "recommended_tasks": ["generic coding"]
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "frontend", "review", "shell", "short_task", "multi_file"],
+      "departments": ["engineering", "review"],
+      "confidence": "medium"
+    },
+    {
+      "id": "antigravity",
+      "display_name": "Antigravity",
+      "commands": ["antigravity"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["research", "docs", "shell", "short_task"],
+      "departments": ["research"],
+      "confidence": "low"
+    },
+    {
+      "id": "agy",
+      "display_name": "Antigravity CLI",
+      "commands": ["agy"],
+      "lightweight_checks": [["--help"]],
+      "capability_hints": ["research", "review", "shell", "short_task"],
+      "departments": ["research"],
+      "confidence": "high"
+    },
+    {
+      "id": "astrbot",
+      "display_name": "AstrBot",
+      "commands": ["astrbot"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["docs", "short_task"],
+      "departments": ["research"],
+      "confidence": "low"
+    },
+    {
+      "id": "augment",
+      "display_name": "Augment",
+      "commands": ["augment"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "frontend", "review", "multi_file"],
+      "departments": ["engineering", "review"],
+      "confidence": "low"
+    },
+    {
+      "id": "autohand-code",
+      "display_name": "Autohand Code CLI",
+      "commands": ["autohand-code", "autohand"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "shell", "short_task"],
+      "departments": ["engineering"],
+      "confidence": "low"
+    },
+    {
+      "id": "claude",
+      "display_name": "Claude Code",
+      "commands": ["claude", "claude-code"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["research", "review", "docs", "long_task", "multi_file"],
+      "departments": ["planning", "research", "review"],
+      "confidence": "high"
+    },
+    {
+      "id": "claude-cowork",
+      "display_name": "Claude Cowork",
+      "commands": ["claude-cowork"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["docs", "review", "long_task"],
+      "departments": ["review"],
+      "confidence": "low"
+    },
+    {
+      "id": "cline",
+      "display_name": "Cline",
+      "commands": ["cline"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "frontend", "review", "multi_file"],
+      "departments": ["engineering", "review"],
+      "confidence": "medium"
+    },
+    {
+      "id": "codearts-agent",
+      "display_name": "CodeArts Agent",
+      "commands": ["codearts-agent", "codeartsdoer"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "docs", "multi_file"],
+      "departments": ["engineering"],
+      "confidence": "low"
+    },
+    {
+      "id": "codex",
+      "display_name": "OpenAI Codex CLI",
+      "commands": ["codex"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "frontend", "review", "docs", "shell", "long_task", "multi_file"],
+      "departments": ["planning", "engineering", "review"],
+      "confidence": "high"
+    },
+    {
+      "id": "cmdc",
+      "display_name": "Command Code",
+      "commands": ["cmdc", "command-code"],
+      "lightweight_checks": [["--help"], ["--version"], ["status"]],
+      "capability_hints": ["vision", "backend", "frontend", "review", "docs", "shell", "long_task", "multi_file"],
+      "departments": ["vision", "engineering", "review"],
+      "confidence": "high"
+    },
+    {
+      "id": "continue",
+      "display_name": "Continue",
+      "commands": ["continue"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "frontend", "docs", "multi_file"],
+      "departments": ["engineering"],
+      "confidence": "medium"
+    },
+    {
+      "id": "cursor",
+      "display_name": "Cursor",
+      "commands": ["cursor", "cursor-agent"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "frontend", "review", "long_task", "multi_file"],
+      "departments": ["engineering", "review"],
+      "confidence": "medium"
+    },
+    {
+      "id": "deepseek-tui",
+      "display_name": "DeepSeek TUI",
+      "commands": ["deepseek-tui", "deepseek"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "docs", "long_task"],
+      "departments": ["research", "engineering"],
+      "confidence": "low"
+    },
+    {
+      "id": "factory-droid",
+      "display_name": "Factory Droid",
+      "commands": ["factory-droid"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "shell", "multi_file"],
+      "departments": ["engineering"],
+      "confidence": "low"
+    },
+    {
+      "id": "gemini",
+      "display_name": "Gemini CLI",
+      "commands": ["gemini", "gemini-cli"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["vision", "research", "docs", "long_task"],
+      "departments": ["research", "vision"],
+      "confidence": "high"
+    },
+    {
+      "id": "github-copilot",
+      "display_name": "GitHub Copilot",
+      "commands": ["github-copilot", "copilot", "copilot-cli"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "frontend", "short_task"],
+      "departments": ["engineering"],
+      "confidence": "medium"
+    },
+    {
+      "id": "goose",
+      "display_name": "Goose",
+      "commands": ["goose"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["research", "docs", "shell", "short_task"],
+      "departments": ["research"],
+      "confidence": "medium"
+    },
+    {
+      "id": "hermes-agent",
+      "display_name": "Hermes Agent",
+      "commands": ["hermes-agent", "hermes"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "docs", "shell"],
+      "departments": ["engineering"],
+      "confidence": "low"
+    },
+    {
+      "id": "ibm-bob",
+      "display_name": "IBM Bob",
+      "commands": ["ibm-bob", "bob"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["docs", "research", "long_task"],
+      "departments": ["research"],
+      "confidence": "low"
+    },
+    {
+      "id": "jcode",
+      "display_name": "jcode",
+      "commands": ["jcode"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "short_task"],
+      "departments": ["engineering"],
+      "confidence": "low"
+    },
+    {
+      "id": "kilo-code",
+      "display_name": "Kilo Code",
+      "commands": ["kilo-code", "kilocode"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "frontend", "short_task"],
+      "departments": ["engineering"],
+      "confidence": "low"
+    },
+    {
+      "id": "kimi-code",
+      "display_name": "Kimi Code",
+      "commands": ["kimi-code", "kimi-code-cli"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["vision", "frontend", "docs", "long_task"],
+      "departments": ["vision", "research"],
+      "confidence": "medium"
+    },
+    {
+      "id": "open-claw",
+      "display_name": "Open Claw",
+      "commands": ["open-claw", "openclaw"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "shell", "multi_file"],
+      "departments": ["engineering"],
+      "confidence": "low"
     },
     {
       "id": "opencode",
       "display_name": "OpenCode",
       "commands": ["opencode"],
-      "preferred_checks": [
-        ["--help"],
-        ["--version"]
-      ],
-      "capabilities": ["code-implementation", "code-review", "long-context-synthesis"],
-      "strengths": ["generic coding and synthesis worker"],
-      "weaknesses": ["local capability may differ by install"],
-      "recommended_tasks": ["generic coding", "synthesis"]
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "frontend", "review", "long_task", "multi_file"],
+      "departments": ["engineering", "review"],
+      "confidence": "medium"
+    },
+    {
+      "id": "openhands",
+      "display_name": "OpenHands",
+      "commands": ["openhands", "openhands-cli"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "shell", "long_task", "multi_file"],
+      "departments": ["engineering"],
+      "confidence": "medium"
+    },
+    {
+      "id": "open-interpreter",
+      "display_name": "Open Interpreter",
+      "commands": ["open-interpreter", "interpreter"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["shell", "short_task", "docs"],
+      "departments": ["engineering"],
+      "confidence": "medium"
+    },
+    {
+      "id": "pearai",
+      "display_name": "PearAI",
+      "commands": ["pearai", "pear"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["frontend", "docs", "short_task"],
+      "departments": ["engineering"],
+      "confidence": "low"
+    },
+    {
+      "id": "pieces-copilot",
+      "display_name": "Pieces Copilot",
+      "commands": ["pieces-copilot", "pieces"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["docs", "research", "short_task"],
+      "departments": ["research"],
+      "confidence": "low"
+    },
+    {
+      "id": "plandex",
+      "display_name": "Plandex",
+      "commands": ["plandex"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "long_task", "multi_file"],
+      "departments": ["planning", "engineering"],
+      "confidence": "medium"
     },
     {
       "id": "qwen-code",
       "display_name": "Qwen Code",
-      "commands": ["qwen", "qwen-code"],
-      "preferred_checks": [
-        ["--help"],
-        ["--version"]
-      ],
-      "capabilities": ["code-implementation", "long-context-synthesis"],
-      "strengths": ["coding and long context potential"],
-      "weaknesses": ["local install/profile may vary"],
-      "recommended_tasks": ["code", "synthesis"]
+      "commands": ["qwen-code", "qwen"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "docs", "long_task", "multi_file"],
+      "departments": ["engineering", "research"],
+      "confidence": "medium"
     },
     {
-      "id": "gemini-cli",
-      "display_name": "Gemini CLI",
-      "commands": ["gemini", "gemini-cli"],
-      "preferred_checks": [
-        ["--help"],
-        ["--version"]
-      ],
-      "capabilities": ["vision", "research-web", "long-context-synthesis"],
-      "strengths": ["vision-friendly profile", "fast research and synthesis"],
-      "weaknesses": ["availability varies by install"],
-      "recommended_tasks": ["vision", "research-web", "synthesis"]
+      "id": "replit-agent",
+      "display_name": "Replit Agent",
+      "commands": ["replit-agent", "replit"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "frontend", "short_task", "multi_file"],
+      "departments": ["engineering"],
+      "confidence": "low"
     },
     {
-      "id": "kimi-code-cli",
-      "display_name": "Kimi Code CLI",
-      "commands": ["kimi-code", "kimi-code-cli"],
-      "preferred_checks": [
-        ["--help"],
-        ["--version"]
-      ],
-      "capabilities": ["vision", "code-implementation", "long-context-synthesis"],
-      "strengths": ["vision-capable coding potential", "long-horizon tasks"],
-      "weaknesses": ["availability varies by install"],
-      "recommended_tasks": ["vision", "code", "synthesis"]
+      "id": "roo",
+      "display_name": "Roo",
+      "commands": ["roo", "roo-code"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "frontend", "review", "multi_file"],
+      "departments": ["engineering", "review"],
+      "confidence": "medium"
+    },
+    {
+      "id": "shellgpt",
+      "display_name": "ShellGPT",
+      "commands": ["shellgpt", "sgpt"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["research", "shell", "short_task", "docs"],
+      "departments": ["research"],
+      "confidence": "medium"
+    },
+    {
+      "id": "smolagents",
+      "display_name": "Smolagents CLI",
+      "commands": ["smolagents"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["docs", "research", "shell"],
+      "departments": ["research"],
+      "confidence": "low"
+    },
+    {
+      "id": "tabnine",
+      "display_name": "Tabnine",
+      "commands": ["tabnine"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "frontend", "short_task"],
+      "departments": ["engineering"],
+      "confidence": "low"
+    },
+    {
+      "id": "warp",
+      "display_name": "Warp",
+      "commands": ["warp"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["shell", "docs", "short_task"],
+      "departments": ["engineering"],
+      "confidence": "medium"
+    },
+    {
+      "id": "windsurf",
+      "display_name": "Windsurf",
+      "commands": ["windsurf"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "frontend", "multi_file", "long_task"],
+      "departments": ["engineering"],
+      "confidence": "medium"
+    },
+    {
+      "id": "zed",
+      "display_name": "Zed",
+      "commands": ["zed", "zed-agent"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["frontend", "backend", "docs"],
+      "departments": ["engineering"],
+      "confidence": "low"
+    },
+    {
+      "id": "amazon-q",
+      "display_name": "Amazon Q Developer",
+      "commands": ["q", "q-cli", "amazon-q"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "review", "docs", "long_task"],
+      "departments": ["engineering", "review"],
+      "confidence": "medium"
+    },
+    {
+      "id": "bolt",
+      "display_name": "Bolt",
+      "commands": ["bolt", "bolt-cli"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["frontend", "short_task", "docs"],
+      "departments": ["engineering"],
+      "confidence": "low"
+    },
+    {
+      "id": "cody",
+      "display_name": "Cody",
+      "commands": ["cody", "cody-cli"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "frontend", "review", "docs"],
+      "departments": ["engineering", "review"],
+      "confidence": "medium"
+    },
+    {
+      "id": "factory-ai",
+      "display_name": "Factory AI",
+      "commands": ["factory-ai"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "shell", "multi_file"],
+      "departments": ["engineering"],
+      "confidence": "low"
+    },
+    {
+      "id": "gpt-engineer",
+      "display_name": "GPT Engineer",
+      "commands": ["gpt-engineer"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "docs", "long_task", "multi_file"],
+      "departments": ["planning", "engineering"],
+      "confidence": "medium"
+    },
+    {
+      "id": "mentat",
+      "display_name": "Mentat",
+      "commands": ["mentat"],
+      "lightweight_checks": [["--help"], ["--version"]],
+      "capability_hints": ["backend", "review", "multi_file"],
+      "departments": ["engineering", "review"],
+      "confidence": "medium"
     }
   ]
 }

@@ -1,3 +1,5 @@
 __pycache__/
 *.pyc
 skills/together/data/latest-registry.json
+.together/cache/agent-registry.json
+.together/reports/agent-report.md

@@ -1,0 +1,20 @@
+{
+  "name": "together",
+  "description": "System-level orchestration skill for local AI agent fleets",
+  "owner": {
+    "name": "kyoo-147",
+    "email": ""
+  },
+  "plugins": [
+    {
+      "name": "together",
+      "description": "Always-on PM router for local AI agent CLIs, model-aware routing, fallbacks, and resume reports",
+      "version": "0.1.0",
+      "source": "./",
+      "author": {
+        "name": "kyoo-147",
+        "email": ""
+      }
+    }
+  ]
+}

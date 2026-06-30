@@ -1,0 +1,12 @@
+{
+  "capabilities": {
+    "planning": ["cmdc", "claude", "codex-cli"],
+    "research-web": ["agy", "gemini-cli", "cmdc"],
+    "vision": ["cmdc", "gemini-cli", "kimi-code-cli"],
+    "code-implementation": ["cmdc", "agy", "codex-cli", "qwen-code"],
+    "code-review": ["cmdc", "claude", "agy", "codex-cli"],
+    "verification": ["cmdc", "claude", "codex-cli"],
+    "tool-execution": ["agy", "cmdc"],
+    "long-context-synthesis": ["cmdc", "claude", "qwen-code", "kimi-code-cli"]
+  }
+}

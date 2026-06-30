@@ -1,0 +1,10 @@
+{
+  "hints": {
+    "vision": ["gemini", "kimi", "minimax", "stepfun"],
+    "long-context-synthesis": ["glm", "deepseek", "claude", "qwen"],
+    "code-implementation": ["claude", "gpt", "deepseek", "glm", "qwen"],
+    "code-review": ["claude", "gpt", "deepseek", "glm"],
+    "verification": ["claude", "gpt", "deepseek"],
+    "research-web": ["gemini", "claude", "deepseek"]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "together",
+  "description": "Always-on orchestration skill for Codex-style PM routing across local AI agent CLIs",
+  "version": "0.1.0",
+  "author": {
+    "name": "kyoo-147",
+    "email": ""
+  },
+  "homepage": "https://github.com/kyoo-147/together_working",
+  "repository": "https://github.com/kyoo-147/together_working",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "orchestration",
+    "agents",
+    "codex",
+    "commandcode",
+    "antigravity"
+  ]
+}

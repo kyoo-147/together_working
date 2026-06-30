@@ -1,0 +1,123 @@
+{
+  "agents": [
+    {
+      "id": "cmdc",
+      "display_name": "Command Code",
+      "commands": ["cmdc", "command-code"],
+      "preferred_checks": [
+        ["--help"],
+        ["--version"],
+        ["--list-models"],
+        ["status"]
+      ],
+      "capabilities": ["planning", "vision", "code-implementation", "code-review", "verification", "long-context-synthesis"],
+      "strengths": ["many models", "vision-capable options", "good for synthesis", "good for code and review"],
+      "weaknesses": ["depends on configured model access", "may vary by account state"],
+      "recommended_tasks": ["vision", "long-context-synthesis", "code-review", "code-implementation"]
+    },
+    {
+      "id": "agy",
+      "display_name": "Antigravity CLI",
+      "commands": ["agy"],
+      "preferred_checks": [
+        ["--help"],
+        ["models"]
+      ],
+      "capabilities": ["research-web", "code-implementation", "code-review", "tool-execution"],
+      "strengths": ["bounded worker tasks", "good sidecar CLI", "simple scoped execution"],
+      "weaknesses": ["not the best control plane", "model access varies"],
+      "recommended_tasks": ["research-web", "tool-execution", "scoped implementation", "scoped audit"]
+    },
+    {
+      "id": "claude",
+      "display_name": "Claude CLI",
+      "commands": ["claude", "claude-code"],
+      "preferred_checks": [
+        ["--help"],
+        ["--version"]
+      ],
+      "capabilities": ["planning", "code-review", "verification", "long-context-synthesis"],
+      "strengths": ["reasoning-heavy tasks", "spec review", "critique"],
+      "weaknesses": ["availability varies by install"],
+      "recommended_tasks": ["planning", "review", "verification", "synthesis"]
+    },
+    {
+      "id": "codex-cli",
+      "display_name": "OpenAI Codex CLI",
+      "commands": ["codex"],
+      "preferred_checks": [
+        ["--help"],
+        ["--version"]
+      ],
+      "capabilities": ["planning", "code-implementation", "code-review", "verification"],
+      "strengths": ["coding-oriented CLI", "good fallback for code tasks"],
+      "weaknesses": ["local install may be missing or unconfigured"],
+      "recommended_tasks": ["code-implementation", "review", "verification"]
+    },
+    {
+      "id": "amp",
+      "display_name": "Amp CLI",
+      "commands": ["amp"],
+      "preferred_checks": [
+        ["--help"],
+        ["--version"]
+      ],
+      "capabilities": ["code-implementation", "code-review"],
+      "strengths": ["generic coding worker"],
+      "weaknesses": ["profile confidence is low without local validation"],
+      "recommended_tasks": ["generic coding"]
+    },
+    {
+      "id": "opencode",
+      "display_name": "OpenCode",
+      "commands": ["opencode"],
+      "preferred_checks": [
+        ["--help"],
+        ["--version"]
+      ],
+      "capabilities": ["code-implementation", "code-review", "long-context-synthesis"],
+      "strengths": ["generic coding and synthesis worker"],
+      "weaknesses": ["local capability may differ by install"],
+      "recommended_tasks": ["generic coding", "synthesis"]
+    },
+    {
+      "id": "qwen-code",
+      "display_name": "Qwen Code",
+      "commands": ["qwen", "qwen-code"],
+      "preferred_checks": [
+        ["--help"],
+        ["--version"]
+      ],
+      "capabilities": ["code-implementation", "long-context-synthesis"],
+      "strengths": ["coding and long context potential"],
+      "weaknesses": ["local install/profile may vary"],
+      "recommended_tasks": ["code", "synthesis"]
+    },
+    {
+      "id": "gemini-cli",
+      "display_name": "Gemini CLI",
+      "commands": ["gemini", "gemini-cli"],
+      "preferred_checks": [
+        ["--help"],
+        ["--version"]
+      ],
+      "capabilities": ["vision", "research-web", "long-context-synthesis"],
+      "strengths": ["vision-friendly profile", "fast research and synthesis"],
+      "weaknesses": ["availability varies by install"],
+      "recommended_tasks": ["vision", "research-web", "synthesis"]
+    },
+    {
+      "id": "kimi-code-cli",
+      "display_name": "Kimi Code CLI",
+      "commands": ["kimi-code", "kimi-code-cli"],
+      "preferred_checks": [
+        ["--help"],
+        ["--version"]
+      ],
+      "capabilities": ["vision", "code-implementation", "long-context-synthesis"],
+      "strengths": ["vision-capable coding potential", "long-horizon tasks"],
+      "weaknesses": ["availability varies by install"],
+      "recommended_tasks": ["vision", "code", "synthesis"]
+    }
+  ]
+}

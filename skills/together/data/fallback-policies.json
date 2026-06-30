@@ -1,0 +1,19 @@
+{
+  "default_fallback_order": [
+    "same-agent-different-model",
+    "different-agent-same-capability",
+    "reduced-scope-batch",
+    "codex-takeover",
+    "controlled-pause"
+  ],
+  "failure_types": [
+    "rate-limit",
+    "token-exhaustion",
+    "wait-state",
+    "timeout",
+    "auth-failure",
+    "empty-output",
+    "malformed-output",
+    "capability-mismatch"
+  ]
+}

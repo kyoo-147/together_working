@@ -23,3 +23,4 @@ Purpose:
 - fast status read
 - repeatable routing context
 - resume-friendly local memory
+- operator-visible verification context

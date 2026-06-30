@@ -7,7 +7,7 @@ description: Use when a task is large enough to benefit from agent-agnostic orch
 
 ## Overview
 
-`together` turns Codex into orchestration layer.
+`together` turns Codex into department operating layer.
 
 Codex does:
 - plan
@@ -16,6 +16,7 @@ Codex does:
 - ask approval before external execution
 - verify outputs
 - merge final answer
+- hold final merge authority
 
 Workers do scoped tasks only.
 
@@ -40,6 +41,7 @@ Skip for tiny one-shot tasks.
 6. If all workers fail, Codex takes over if practical.
 7. If work must pause, write resume context.
 8. Respect local override and cooldown state.
+9. Worker tasks should use explicit scope and success criteria.
 
 ## Quick flow
 
@@ -49,7 +51,8 @@ Skip for tiny one-shot tasks.
 4. Pick ready worker from department order.
 5. Check cooldown and degraded state before dispatch.
 6. Keep fallback path ready.
-7. Integrate back into Codex.
+7. Verify scope compliance before merge.
+8. Integrate back into Codex.
 
 ## Commands
 

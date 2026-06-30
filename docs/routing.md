@@ -4,6 +4,7 @@ Routing rule:
 - ready first
 - fit second
 - fallback always
+- verify before merge
 
 Codex never disappears from loop.
 
@@ -18,7 +19,8 @@ Department order:
 Task routing chooses:
 1. preferred ready provider
 2. backup ready provider
-3. Codex verification path
+3. verification path
+4. Codex merge path
 
 If no preferred provider is ready, fallback becomes any ready provider with matching hints.
 

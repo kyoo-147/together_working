@@ -1,9 +1,8 @@
 __pycache__/
 *.pyc
 skills/together/data/latest-registry.json
-.together/cache/agent-registry.json
-.together/cache/last-known-good.json
-.together/cache/runtime-state.json
-.together/cache/validation-override-test.json
-.together/reports/agent-report.md
+.together/cache/*
+!.together/cache/.gitkeep
+.together/reports/*
+!.together/reports/.gitkeep
 .together/runtime-state.json

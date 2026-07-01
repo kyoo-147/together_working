@@ -1,0 +1,18 @@
+task_id: TASK-123
+scope:
+  - src/together/*
+allowed_files:
+  - src/together/registry.py
+  - tests/test_registry.py
+denied_files:
+  - .env
+  - "**/secrets/*"
+deliverables:
+  - updated registry validation
+  - updated tests
+success_criteria:
+  - all validation commands pass
+  - no denied files changed
+reviewer_required: true
+verification_required: true
+

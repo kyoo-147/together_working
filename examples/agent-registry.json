@@ -1,0 +1,185 @@
+{
+  "version": "0.3.1",
+  "generated_at": "2026-07-01T00:00:00+00:00",
+  "summary": {
+    "known_providers": 48,
+    "installed_clis": 3,
+    "ready_agents": 2,
+    "broken_agents": 1,
+    "degraded_agents": 1
+  },
+  "codex_role": [
+    "PM",
+    "control-plane",
+    "planner",
+    "coordinator",
+    "verifier",
+    "final-integrator"
+  ],
+  "warnings": [],
+  "providers": [
+    {
+      "id": "cmdc",
+      "display_name": "Command Code",
+      "commands": ["cmdc", "command-code"],
+      "command_found": "cmdc",
+      "path": "<sanitized>",
+      "installed": true,
+      "health_ready": true,
+      "routing_ready": true,
+      "ready": true,
+      "status": "ready",
+      "status_reason": "CLI responded and auth markers look healthy.",
+      "checks": {
+        "--help": {"ok": true, "output": "help text"},
+        "--version": {"ok": true, "output": "0.40.14"}
+      },
+      "capability_hints": ["vision", "backend", "frontend", "review", "verification"],
+      "departments": ["vision", "engineering", "review", "verification"],
+      "confidence": "high",
+      "disabled": false,
+      "rank_adjust": 0,
+      "cooldown_until": null,
+      "degraded": false,
+      "routing_status": "ready",
+      "routing_reason": "CLI responded and auth markers look healthy.",
+      "rank_score": 116
+    },
+    {
+      "id": "claude",
+      "display_name": "Claude Code",
+      "commands": ["claude", "claude-code"],
+      "command_found": "claude",
+      "path": "<sanitized>",
+      "installed": true,
+      "health_ready": true,
+      "routing_ready": true,
+      "ready": true,
+      "status": "ready",
+      "status_reason": "CLI responded to lightweight checks.",
+      "checks": {
+        "--help": {"ok": true, "output": "help text"},
+        "--version": {"ok": true, "output": "2.1.195"}
+      },
+      "capability_hints": ["research", "review", "verification", "docs"],
+      "departments": ["planning", "research", "review", "verification"],
+      "confidence": "high",
+      "disabled": false,
+      "rank_adjust": 0,
+      "cooldown_until": null,
+      "degraded": false,
+      "routing_status": "ready",
+      "routing_reason": "CLI responded to lightweight checks.",
+      "rank_score": 114
+    },
+    {
+      "id": "codex",
+      "display_name": "OpenAI Codex CLI",
+      "commands": ["codex"],
+      "command_found": "codex",
+      "path": "<sanitized>",
+      "installed": true,
+      "health_ready": false,
+      "routing_ready": false,
+      "ready": false,
+      "status": "permission-denied",
+      "status_reason": "CLI exists but OS permissions blocked execution.",
+      "checks": {
+        "--help": {"ok": false, "output": "[WinError 5] Access is denied"}
+      },
+      "capability_hints": ["backend", "frontend", "review", "verification", "docs"],
+      "departments": ["planning", "engineering", "review", "verification"],
+      "confidence": "high",
+      "disabled": false,
+      "rank_adjust": 0,
+      "cooldown_until": "2026-07-01T00:15:00+00:00",
+      "degraded": true,
+      "routing_status": "permission-denied",
+      "routing_reason": "CLI exists but OS permissions blocked execution.",
+      "rank_score": 46
+    }
+  ],
+  "routing": {
+    "tasks": {
+      "planning": {
+        "preferred_order": ["codex", "claude"],
+        "ready_candidates": ["claude"],
+        "fallback_policy": "any ready agent with docs or long_task hints"
+      },
+      "review": {
+        "preferred_order": ["claude", "codex", "cmdc"],
+        "ready_candidates": ["claude", "cmdc"],
+        "fallback_policy": "any ready agent with review hints"
+      },
+      "verification": {
+        "preferred_order": ["codex", "claude", "cmdc"],
+        "ready_candidates": ["claude", "cmdc"],
+        "fallback_policy": "any ready agent with verification, review, or docs hints"
+      }
+    },
+    "departments": {
+      "planning": {"preferred_order": ["codex", "claude"], "ready_candidates": ["claude"]},
+      "review": {"preferred_order": ["claude", "codex", "cmdc"], "ready_candidates": ["claude", "cmdc"]},
+      "verification": {"preferred_order": ["codex", "claude", "cmdc"], "ready_candidates": ["claude", "cmdc"]},
+      "fallback": {"preferred_order": [], "ready_candidates": ["cmdc", "claude"]}
+    },
+    "best_available_workers": [
+      {"id": "cmdc", "display_name": "Command Code", "rank_score": 116, "best_hints": ["vision", "backend"], "departments": ["vision", "engineering"]},
+      {"id": "claude", "display_name": "Claude Code", "rank_score": 114, "best_hints": ["research", "review"], "departments": ["planning", "research"]}
+    ],
+    "best_by_task": {
+      "planning": {"best": "claude", "display_name": "Claude Code", "alternatives": [], "alternative_display_names": []},
+      "review": {"best": "claude", "display_name": "Claude Code", "alternatives": ["cmdc"], "alternative_display_names": ["Command Code"]}
+    }
+  },
+  "operations": {
+    "override_path": ".together/providers.override.json",
+    "runtime_state_path": ".together/cache/runtime-state.json",
+    "last_known_good_path": ".together/cache/last-known-good.json",
+    "cooldown_seconds": 900,
+    "recently_failed_agents": [
+      {"id": "codex", "reason": "permission-denied", "cooldown_until": "2026-07-01T00:15:00+00:00"}
+    ],
+    "degraded_agents": ["codex"],
+    "runtime_state": {
+      "version": "0.3.1",
+      "cooldown_seconds": 900,
+      "recent_failures": {
+        "codex": {
+          "reason": "permission-denied",
+          "last_failed_at": "2026-07-01T00:00:00+00:00",
+          "cooldown_until": "2026-07-01T00:15:00+00:00"
+        }
+      }
+    },
+    "next_last_known_good": null
+  },
+  "last_known_good": {
+    "version": "0.3.1",
+    "timestamp": "2026-07-01T00:00:00+00:00",
+    "summary": {
+      "known_providers": 48,
+      "installed_clis": 3,
+      "ready_agents": 2,
+      "broken_agents": 1,
+      "degraded_agents": 1
+    },
+    "ready_agents": [
+      {"id": "cmdc", "display_name": "Command Code", "rank_score": 116},
+      {"id": "claude", "display_name": "Claude Code", "rank_score": 114}
+    ],
+    "routing": {
+      "tasks": {
+        "planning": {
+          "preferred_order": ["codex", "claude"],
+          "ready_candidates": ["claude"],
+          "fallback_policy": "any ready agent with docs or long_task hints"
+        }
+      },
+      "departments": {
+        "planning": {"preferred_order": ["codex", "claude"], "ready_candidates": ["claude"]}
+      }
+    }
+  }
+}
+

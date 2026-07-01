@@ -1,0 +1,12 @@
+{
+  "version": "0.3.1",
+  "cooldown_seconds": 900,
+  "recent_failures": {
+    "codex": {
+      "reason": "permission-denied",
+      "last_failed_at": "2026-07-01T00:00:00+00:00",
+      "cooldown_until": "2026-07-01T00:15:00+00:00"
+    }
+  }
+}
+

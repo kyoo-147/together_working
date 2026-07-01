@@ -1,0 +1,31 @@
+{
+  "version": "0.3.1",
+  "providers": {
+    "claude": {
+      "disabled": false,
+      "rank_adjust": 5,
+      "add_capabilities": ["shell"],
+      "disable_capabilities": []
+    }
+  },
+  "routing": {
+    "tasks": {
+      "review": {
+        "preferred_first": ["claude"],
+        "preferred_last": ["cmdc"],
+        "remove_preferred": []
+      }
+    },
+    "departments": {
+      "verification": {
+        "preferred_first": ["claude"],
+        "preferred_last": [],
+        "remove_preferred": []
+      }
+    }
+  },
+  "runtime": {
+    "cooldown_seconds": 900
+  }
+}
+

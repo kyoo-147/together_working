@@ -1,0 +1,10 @@
+{
+  "name": "together-working",
+  "private": true,
+  "version": "0.3.1",
+  "description": "Together - Sweet Potato Architecture for local AI department orchestration.",
+  "license": "MIT",
+  "scripts": {
+    "validate": "python scripts/release-check.py"
+  }
+}

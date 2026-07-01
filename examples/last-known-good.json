@@ -1,0 +1,31 @@
+{
+  "version": "0.3.1",
+  "timestamp": "2026-07-01T00:00:00+00:00",
+  "summary": {
+    "known_providers": 48,
+    "installed_clis": 3,
+    "ready_agents": 2,
+    "broken_agents": 1,
+    "degraded_agents": 1
+  },
+  "ready_agents": [
+    {"id": "cmdc", "display_name": "Command Code", "rank_score": 116},
+    {"id": "claude", "display_name": "Claude Code", "rank_score": 114}
+  ],
+  "routing": {
+    "tasks": {
+      "planning": {
+        "preferred_order": ["codex", "claude"],
+        "ready_candidates": ["claude"],
+        "fallback_policy": "any ready agent with docs or long_task hints"
+      }
+    },
+    "departments": {
+      "planning": {
+        "preferred_order": ["codex", "claude"],
+        "ready_candidates": ["claude"]
+      }
+    }
+  }
+}
+

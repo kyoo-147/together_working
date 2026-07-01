@@ -2,14 +2,22 @@
   <img src="docs/assets/generated/together-logo.png" alt="Together logo" width="200">
 </p>
 
-<h1 align="center">🍠 together</h1>
+<h1 align="center">together</h1>
 
 <p align="center">
-  AI Department for local agent teams.
+  <strong>Sweet Potato Architecture for local AI departments.</strong>
+</p>
+
+<p align="center">
+  AI departments, not AI chats.
 </p>
 
 <p align="center">
   Together manages agents. It does not replace them.
+</p>
+
+<p align="center">
+  Codex plans, coordinates, verifies, and integrates.
 </p>
 
 <p align="center">
@@ -22,19 +30,19 @@
   <a href="https://github.com/kyoo-147/together_working/commits/main">
     <img src="https://img.shields.io/github/last-commit/kyoo-147/together_working?style=flat-square" alt="Last commit">
   </a>
-  <img src="https://img.shields.io/badge/skill-system--level-blue?style=flat-square" alt="System level skill">
+  <img src="https://img.shields.io/badge/skill-installable-blue?style=flat-square" alt="Installable skill">
 </p>
 
 <p align="center">
-  <a href="#why-this-exists"><strong>Why</strong></a>
-  |
-  <a href="#how-system-works"><strong>Architecture</strong></a>
-  |
   <a href="#install"><strong>Install</strong></a>
   |
-  <a href="#commands"><strong>Commands</strong></a>
+  <a href="#quickstart"><strong>Quickstart</strong></a>
   |
-  <a href="#repo-map"><strong>Docs</strong></a>
+  <a href="#how-it-works"><strong>How It Works</strong></a>
+  |
+  <a href="#governance-model"><strong>Governance</strong></a>
+  |
+  <a href="#repo-map"><strong>Repo Map</strong></a>
 </p>
 
 <p align="center">
@@ -42,93 +50,105 @@
 </p>
 
 <p align="center">
-  AI departments, not AI chats.
-</p>
-
-<p align="center">
-  Small contexts. Right workers. Clear boundaries.
+  Small contexts. Specialized workers. Better outcomes.
 </p>
 
 <p align="center">
   <img src="docs/assets/generated/together-hero.png" alt="Together hero" width="100%">
 </p>
 
+## Product One-Liner
+
+Together is AI Department Operating System for local AI worker teams.
+
+It is:
+- agent control plane
+- work governance layer
+- verification layer
+- local routing and failover layer
+
+It is not:
+- another agent
+- a replacement for Claude, Codex, Gemini, Amp, or other workers
+- only an agent scanner
+
 ## Sweet Potato Architecture
 
-One potato: Codex
+- One potato: Codex
+- Many potato workers: agents
+- Small potato tasks
+- Big potato outcome
 
-Many potato workers: agents
+Why this exists:
+- giant contexts grow too expensive
+- one worker should not own every step
+- routing should be explicit
+- verification should not be optional
 
-Small potato tasks
+## Install
 
-Big potato outcome
+Install full skill:
 
-Why use one giant context when small contexts do trick.
+```bash
+npx skills add https://github.com/kyoo-147/together_working
+```
 
-- Give each worker only context they need.
-- Route task to right worker instead of growing one chat forever.
-- Keep verification separate from implementation.
-- Spend fewer tokens. Get cleaner output. Keep merge control clear.
+Install only main skill:
 
-## Why This Exists
+```bash
+npx skills add https://github.com/kyoo-147/together_working --skill "together"
+```
 
-Most agent setups break same way:
+Skill entrypoint stays here:
 
-- one agent sees too much
-- one context grows too long
-- routing hidden in prompts
-- verification weak
-- merge authority unclear
+```text
+skills/together/SKILL.md
+```
 
-`together` exists to stop that.
+## Quickstart
 
-It turns installed agents into department workers with clear work boundaries, clear routing, clear verification, clear final control.
+Scan machine:
 
-## What Together Is
+```bash
+python skills/together/scripts/discover-agents.py --format table
+```
 
-Together is:
+Write operator snapshot:
 
-- discovery
-- registry
-- routing
-- governance
-- verification
-- merge control
+```bash
+python skills/together/scripts/doctor.py
+```
 
-Together is not:
+Render report:
 
-- another chat wrapper
-- benchmark suite
-- giant autonomous scheduler
-- claim that one model best at everything
+```bash
+python skills/together/scripts/render-report.py
+```
 
-## What You Get
+Run local release checks:
 
-- discovery of supported agent providers
-- scan of installed CLIs on current machine
-- lightweight ready-state health checks
-- capability-based department routing
-- verification before merge
-- failover and degraded-mode handling
-- local cache and operator-readable reports
+```bash
+python scripts/release-check.py
+```
 
-## Before / After
+## Commands
 
-Before:
+- `python skills/together/scripts/discover-agents.py --format table`
+- `python skills/together/scripts/write-registry.py`
+- `python skills/together/scripts/doctor.py`
+- `python skills/together/scripts/render-report.py`
+- `python scripts/validate-json.py`
+- `python scripts/validate-registry.py`
+- `python scripts/validate-routing.py`
+- `python scripts/release-check.py`
 
-- one giant chat
-- one giant context
-- one worker sees too much
-- verification happens late or not at all
+Thin wrappers:
+- `bin/together-scan`
+- `bin/together-report`
+- `bin/together-doctor`
+- `bin/together-validate`
 
-After:
-
-- department workflow
-- small scoped tasks
-- right worker for right job
-- Codex verifies and integrates final output
-
-## How System Works
+## How It Works
 
 <p align="center">
   <img src="docs/assets/generated/together-architecture-overview.png" alt="Together architecture overview" width="100%">
@@ -147,27 +167,19 @@ Routing
 ↓
 Verification
 ↓
+Report
+↓
 Output
 ```
 
-Flow meaning:
-
-- Known Providers: curated ecosystem Together knows how to classify.
-- Installed CLIs: commands actually found on machine.
-- Ready Agents: installed workers that pass light health checks.
-- Departments: planning, research, vision, engineering, review, verification, fallback.
-- Routing: capability-first assignment with failover.
-- Verification: output, scope, and routing sanity checks before integration.
-
-## How It Works
-
-- load known provider registry
-- detect installed CLI workers on PATH
-- run lightweight health checks
-- classify ready, broken, and degraded workers
-- route work by department and capability hints
-- fail over when preferred worker is unavailable
-- let Codex verify, integrate, and decide merge outcome
+Stage meaning:
+- `Known Providers`: curated ecosystem Together understands
+- `Installed CLIs`: commands found on current machine
+- `Ready Agents`: installed workers passing lightweight checks
+- `Departments`: planning, research, vision, engineering, review, verification, fallback
+- `Routing`: readiness-first and capability-aware
+- `Verification`: scope, quality, and acceptance checks before merge
+- `Report`: operator-readable snapshot
 
 ## Registry / Ready-State Model
 
@@ -175,69 +187,33 @@ Flow meaning:
   <img src="docs/assets/generated/together-registry-ready-state.png" alt="Together registry and ready-state model" width="100%">
 </p>
 
-This is one of Together's core ideas:
-
-- `Known Providers` means agent ecosystem Together understands.
-- `Installed CLIs` means commands found on this machine.
-- `Ready Agents` means installed workers that pass lightweight health checks.
+Three layers matter:
+- `Known Providers` is ecosystem coverage, not local installation
+- `Installed CLIs` is machine state
+- `Ready Agents` is machine state plus health readiness
 
 Health checks stay cheap:
+- command exists
+- help/version runs
+- obvious auth/config failure detected
+- permission-denied state detected
 
-- command exists on PATH
-- version or help command runs
-- obvious auth or config failures surfaced
-- immediate permission-denied state detected
-
-## Department Model
-
-- Planning: `codex`, `claude`
-- Research: `gemini`, `agy`, `claude`
-- Vision: `gemini`, `cmdc`, `kimi-code`
-- Engineering: `codex`, `cmdc`, `amp`, `opencode`
-- Review: `claude`, `codex`, `cmdc`
-- Verification: `codex`, `claude`, `cmdc`
-- Fallback: any ready worker with matching capability hints
-
-Codex role:
-
-- planner
-- coordinator
-- verifier
-- integrator
-- merge authority
-
-## Work Governance
+## Governance Model
 
 <p align="center">
   <img src="docs/assets/generated/together-governance-control.png" alt="Together work governance and control" width="100%">
 </p>
 
-Agents must not do everything.
+Together assumes workers need boundaries.
 
-Agents should only do assigned work inside assigned scope.
+Rules:
+- agent cannot do everything
+- agent works only inside assigned scope
+- review checks output quality
+- verification checks contract and scope
+- Codex decides merge and integration
 
-Verification checks contract and boundaries.
-
-Codex decides merge.
-
-```text
-Task
-↓
-Assignment
-↓
-Execution
-↓
-Review
-↓
-Verification
-↓
-Merge Decision
-```
-
-### Task Contract
-
-Each meaningful task should carry contract:
-
+Task contract fields:
 - task id
 - scope
 - allowed files
@@ -247,29 +223,20 @@ Each meaningful task should carry contract:
 - reviewer required
 - verification required
 
-Goal:
-
-- worker changes only assigned scope
-- reviewer checks quality
-- verification checks compliance
-
-### Permission Model
-
-- Observer: read, search, analyze
-- Researcher: gather, compare, summarize
-- Implementer: modify assigned scope only
-- Reviewer: review, approve, reject
-- Integrator: merge, final decision
+Permission model:
+- Observer
+- Researcher
+- Implementer
+- Reviewer
+- Integrator
 
 Codex defaults to Integrator.
 
-## Workflow Control
+## Department Workflow
 
 <p align="center">
   <img src="docs/assets/generated/together-department-pipeline.png" alt="Together department pipeline" width="100%">
 </p>
-
-Together runs work through departments, not one endless conversation.
 
 ```text
 Request
@@ -291,21 +258,6 @@ Integration
 Output
 ```
 
-Verification outcomes:
-
-- `PASS`
-- `REJECT`
-- `NEEDS_REVIEW`
-
-Verification checks:
-
-- scope compliance
-- allowed files
-- denied files
-- acceptance criteria
-- routing correctness
-- architecture compliance
-
 ## Failover / Degraded Mode
 
 <p align="center">
@@ -313,131 +265,81 @@ Verification checks:
 </p>
 
 When a preferred worker fails:
-
 - mark degraded
-- store recent failure state
 - start cooldown
 - route to healthy fallback worker
-- probe recovery after cooldown
+- probe recovery later
 - return to preferred worker when healthy again
 
-Codex still verifies and integrates final result.
+## Examples
 
-## Operations Model
+Committed, scrubbed examples:
+- `examples/agent-registry.json`
+- `examples/agent-report.md`
+- `examples/last-known-good.json`
+- `examples/runtime-state.json`
+- `examples/providers.override.example.json`
+- `examples/task-contract.example.yaml`
 
-<p align="center">
-  <img src="docs/assets/generated/together-operations-artifacts.png" alt="Together operations and artifacts" width="100%">
-</p>
-
-Together keeps lightweight operator memory:
-
-- registry cache
-- last known good snapshot
-- runtime failover state
-- provider override
-- human-readable report
-
-Generated artifacts:
-
-- `.together/cache/agent-registry.json`
-- `.together/cache/last-known-good.json`
-- `.together/cache/runtime-state.json`
-- `.together/reports/agent-report.md`
-- `.together/providers.override.json`
-
-Health states:
-
-- `not-installed`
-- `ready`
-- `auth-required`
-- `permission-denied`
-- `installed-but-broken`
-- `installed-unknown`
-
-Runtime controls:
-
-- machine-local provider override
-- cooldown for recently failed agents
-- degraded-agent tracking
-- last-known-good fallback context
-
-## Install
-
-Install full skill:
-
-```bash
-npx skills add https://github.com/kyoo-147/together_working
-```
-
-Install only main skill:
-
-```bash
-npx skills add https://github.com/kyoo-147/together_working --skill "together"
-```
-
-## Commands
-
-Scan machine:
-
-```bash
-python skills/together/scripts/discover-agents.py --format table
-```
-
-Write registry cache:
-
-```bash
-python skills/together/scripts/write-registry.py
-```
-
-Write full operator snapshot:
-
-```bash
-python skills/together/scripts/doctor.py
-```
-
-Edit machine-local override:
-
-```bash
-notepad .together/providers.override.json
-```
-
-Override knobs:
-
-- disable provider
-- rank adjust
-- disable or add capability hints
-- reorder task preference
-- reorder department preference
-- change cooldown seconds
+These are examples, not live runtime outputs.
 
 ## Repo Map
 
-- `skills/together/SKILL.md`
-- `docs/architecture.md`
-- `docs/governance.md`
-- `docs/task-contract.md`
-- `docs/permission-model.md`
-- `docs/workflow-control.md`
-- `docs/routing.md`
-- `docs/registry.md`
-- `docs/health-check.md`
-- `docs/reporting.md`
+```text
+skills/      installable skill entrypoint and compatibility scripts
+docs/        product and system docs
+examples/    committed sample outputs and templates
+tests/       lightweight validation tests
+bin/         thin wrappers around current Python scripts
+commands/    operational command guides
+src/         reusable Python helpers for validation and reporting
+.github/     CI workflow
+assets/      brand and screenshot notes
+agents/      worker-specific guidance
+```
 
-## Links
+## Generated Files Policy
 
-- [GitHub Repo](https://github.com/kyoo-147/together_working)
-- [Skill Entry](skills/together/SKILL.md)
-- [Architecture Doc](docs/architecture.md)
-- [Routing Doc](docs/routing.md)
-- [Governance Doc](docs/governance.md)
-- [Reporting Doc](docs/reporting.md)
+Generated runtime output stays local and ignored:
+- `.together/cache/*`
+- `.together/reports/*`
+- `.together/runtime-state.json`
+
+Committed templates:
+- `.together/providers.override.example.json`
+- `examples/*`
+
+## Documentation
+
+- [PRODUCT.md](PRODUCT.md)
+- [INSTALL.md](INSTALL.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [docs/architecture.md](docs/architecture.md)
+- [docs/registry.md](docs/registry.md)
+- [docs/routing.md](docs/routing.md)
+- [docs/governance.md](docs/governance.md)
+- [docs/observability.md](docs/observability.md)
+- [docs/release.md](docs/release.md)
+- [docs/distribution.md](docs/distribution.md)
+
+## Roadmap
+
+Near-term:
+- stronger test coverage around routing and report generation
+- more provider examples and safer public docs
+- better release automation
+
+Later:
+- optional packaging improvements
+- richer observability diffs
+- more reusable orchestration helpers outside the skill layer
 
 ## Limits
 
 - registry is curated, not exhaustive
-- capability hints are hints, not benchmark claims
-- report is for operator clarity, not model ranking science
-- failover memory is simple cooldown state, not distributed scheduler
+- capability hints are routing hints, not benchmark claims
+- failover is lightweight cooldown state, not a distributed scheduler
+- Together manages workers. It does not replace them.
 
 ## License
 

@@ -119,6 +119,19 @@ Write operator snapshot:
 python skills/together/scripts/doctor.py
 ```
 
+List changed files:
+
+```bash
+python scripts/changed-files.py --json
+```
+
+Validate one task:
+
+```bash
+python scripts/validate-task.py examples/task-contract.example.yaml --mode warn
+python scripts/validate-task.py examples/task-contract.example.yaml --mode strict --write-artifacts
+```
+
 Render report:
 
 ```bash
@@ -140,6 +153,8 @@ python scripts/release-check.py
 - `python scripts/validate-json.py`
 - `python scripts/validate-registry.py`
 - `python scripts/validate-routing.py`
+- `python scripts/changed-files.py --json`
+- `python scripts/validate-task.py examples/task-contract.example.yaml --mode warn`
 - `python scripts/release-check.py`
 
 Thin wrappers:
@@ -232,6 +247,22 @@ Permission model:
 
 Codex defaults to Integrator.
 
+What v0.5 enforces now:
+- task contract validation
+- git diff changed-file capture
+- scope guard
+- file policy validation
+- verification artifacts
+- quality gate
+- merge decision artifacts
+- warn and strict rollout modes
+
+What v0.5 does not do yet:
+- autonomous task execution runner
+- automatic agent sandbox execution
+- automatic commit or PR creation
+- distributed scheduler
+
 ## Department Workflow
 
 <p align="center">
@@ -280,6 +311,7 @@ Committed, scrubbed examples:
 - `examples/runtime-state.json`
 - `examples/providers.override.example.json`
 - `examples/task-contract.example.yaml`
+- `examples/tasks/*`
 
 These are examples, not live runtime outputs.
 
@@ -318,6 +350,8 @@ Committed templates:
 - [docs/registry.md](docs/registry.md)
 - [docs/routing.md](docs/routing.md)
 - [docs/governance.md](docs/governance.md)
+- [docs/enforcement.md](docs/enforcement.md)
+- [docs/task-workflow.md](docs/task-workflow.md)
 - [docs/observability.md](docs/observability.md)
 - [docs/release.md](docs/release.md)
 - [docs/distribution.md](docs/distribution.md)

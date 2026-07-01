@@ -17,6 +17,14 @@ Together v0.5 moves governance from guidance to control.
 - `.together/tasks/*.quality.json`
 - `.together/tasks/*.merge.json`
 
+## Operator Commands
+
+```bash
+python scripts/changed-files.py --json
+python scripts/validate-task.py examples/task-contract.example.yaml --mode warn
+python scripts/validate-task.py examples/task-contract.example.yaml --mode strict --write-artifacts
+```
+
 ## Runtime Order
 
 1. Codex creates task contract.
@@ -30,3 +38,21 @@ Together v0.5 moves governance from guidance to control.
 
 - `warn`: report violations, hold integration for review
 - `strict`: reject out-of-scope or policy-breaking work
+
+## Enforced Now
+
+- contract schema validation
+- changed-file capture from git
+- scope guard
+- allowed and denied file policy
+- machine-readable verification result
+- quality gate
+- merge decision artifact
+- report sections for task enforcement
+
+## Not Included Yet
+
+- autonomous task runner
+- automatic worker sandbox execution
+- automatic commit or PR creation
+- distributed scheduler

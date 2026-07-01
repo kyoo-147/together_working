@@ -9,6 +9,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 JSON_TARGETS = [
     REPO_ROOT / "skills" / "together" / "data",
     REPO_ROOT / "examples",
+    REPO_ROOT / "examples" / "tasks",
     REPO_ROOT / ".together" / "providers.override.json",
     REPO_ROOT / ".together" / "providers.override.example.json",
     REPO_ROOT / ".claude-plugin" / "plugin.json",
@@ -20,7 +21,7 @@ JSON_TARGETS = [
 def iter_json_files():
     for target in JSON_TARGETS:
         if target.is_dir():
-            yield from sorted(target.glob("*.json"))
+            yield from sorted(target.rglob("*.json"))
         elif target.exists():
             yield target
 
@@ -43,4 +44,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

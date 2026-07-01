@@ -1,0 +1,16 @@
+{
+  "task_id": "TASK-123",
+  "status": "PASS",
+  "risk_level": "medium",
+  "required_checks": [
+    "review",
+    "verification"
+  ],
+  "check_results": {
+    "verification": "PASS",
+    "success_criteria": "PASS",
+    "review": "PASS",
+    "task_status": "passed"
+  },
+  "blockers": []
+}

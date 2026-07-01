@@ -1,0 +1,52 @@
+{
+  "task_id": "TASK-123",
+  "status": "PASS",
+  "verifier": "codex",
+  "department": "verification",
+  "checks": {
+    "scope_compliance": {
+      "status": "PASS",
+      "evidence": [
+        "inside scope: src/together/routing.py, tests/test_routing.py"
+      ],
+      "notes": []
+    },
+    "allowed_files": {
+      "status": "PASS",
+      "evidence": [
+        "allowed_matched: src/together/routing.py, tests/test_routing.py"
+      ],
+      "notes": []
+    },
+    "denied_files": {
+      "status": "PASS",
+      "evidence": [],
+      "notes": []
+    },
+    "acceptance_criteria": {
+      "status": "PASS",
+      "evidence": [
+        "routing tests pass",
+        "degraded agents avoided during fallback"
+      ],
+      "notes": []
+    },
+    "routing_correctness": {
+      "status": "PASS",
+      "evidence": [
+        "engineering route selected ready worker"
+      ],
+      "notes": []
+    },
+    "architecture_compliance": {
+      "status": "PASS",
+      "evidence": [
+        "no registry changes"
+      ],
+      "notes": []
+    }
+  },
+  "violations": [],
+  "notes": [],
+  "timestamp": "2026-07-01T08:00:00+00:00"
+}

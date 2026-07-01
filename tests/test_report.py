@@ -56,3 +56,13 @@ def test_report_renderer_can_render_sample_data() -> None:
     assert "## Merge Decisions" in report
     assert "## Department Dashboard" in report
     assert "## Last Known Good" in report
+
+
+def test_report_renderer_handles_missing_task_artifacts_cleanly() -> None:
+    snapshot = json.loads((ROOT / "examples" / "agent-registry.json").read_text(encoding="utf-8"))
+    snapshot["governance"] = {
+        "tasks": [],
+        "department_dashboard": {},
+    }
+    report = render_report(snapshot)
+    assert "No task artifacts found." in report

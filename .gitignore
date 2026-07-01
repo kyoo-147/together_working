@@ -5,6 +5,9 @@ skills/together/data/latest-registry.json
 !.together/cache/.gitkeep
 .together/reports/*
 !.together/reports/.gitkeep
-.together/tasks/*
+.together/tasks/*.status.json
+.together/tasks/*.verification.json
+.together/tasks/*.quality.json
+.together/tasks/*.merge.json
 !.together/tasks/.gitkeep
 .together/runtime-state.json

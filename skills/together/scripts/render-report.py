@@ -243,19 +243,21 @@ def render_task_contracts(snapshot: dict) -> list[str]:
     lines = [
         "## Task Contracts",
         "",
-        "| Task | Department | Role | Risk | Mode | Contract Status |",
-        "|---|---|---|---|---|---|",
     ]
     if not tasks:
-        lines.append("| - | - | - | - | - | - |")
-    else:
-        for task in tasks:
-            contract = task["contract"]
-            status = "valid" if not task.get("contract_errors") else "invalid"
-            lines.append(
-                f"| {task['task_id']} | {contract.get('department', '-')} | {contract.get('role', '-')} | "
-                f"{contract.get('risk_level', '-')} | {contract.get('enforcement_mode', '-')} | {status} |"
-            )
+        lines.extend(["No task artifacts found.", ""])
+        return lines
+    lines.extend([
+        "| Task | Department | Role | Risk | Mode | Contract Status |",
+        "|---|---|---|---|---|---|",
+    ])
+    for task in tasks:
+        contract = task["contract"]
+        status = "valid" if not task.get("contract_errors") else "invalid"
+        lines.append(
+            f"| {task['task_id']} | {contract.get('department', '-')} | {contract.get('role', '-')} | "
+            f"{contract.get('risk_level', '-')} | {contract.get('enforcement_mode', '-')} | {status} |"
+        )
     lines.append("")
     return lines
 

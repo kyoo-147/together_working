@@ -16,8 +16,10 @@ def evaluate_quality_gate(
     review_status: str | None,
     task_status: str | None,
     codex_approval: bool = False,
+    enforcement_mode: str | None = None,
 ) -> dict:
     risk_level = contract.get("risk_level", "medium")
+    mode = enforcement_mode or contract.get("enforcement_mode", "warn")
     required_checks = sorted(RISK_REQUIREMENTS.get(risk_level, RISK_REQUIREMENTS["medium"]))
     blockers: list[str] = []
     check_results: dict[str, str] = {}
@@ -66,6 +68,13 @@ def evaluate_quality_gate(
         blockers.append("task not ready for integration")
 
     reject_reasons = [message for message in blockers if "rejected" in message or "failed" in message or "missing verification" in message or "invalid verification" in message]
+    if mode == "strict":
+        strict_reasons = [
+            message
+            for message in blockers
+            if "review required" in message or "codex approval required" in message or "task not ready" in message
+        ]
+        reject_reasons.extend(strict_reasons)
     status = "PASS"
     if reject_reasons:
         status = "REJECT"

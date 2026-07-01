@@ -11,3 +11,7 @@ skills/together/data/latest-registry.json
 .together/tasks/*.merge.json
 !.together/tasks/.gitkeep
 .together/runtime-state.json
+benchmarks/results/*
+!benchmarks/results/.gitkeep
+benchmarks/reports/*
+!benchmarks/reports/.gitkeep

@@ -351,6 +351,7 @@ Committed templates:
 - [docs/routing.md](docs/routing.md)
 - [docs/governance.md](docs/governance.md)
 - [docs/enforcement.md](docs/enforcement.md)
+- [docs/benchmarking.md](docs/benchmarking.md)
 - [docs/task-workflow.md](docs/task-workflow.md)
 - [docs/observability.md](docs/observability.md)
 - [docs/release.md](docs/release.md)

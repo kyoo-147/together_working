@@ -47,6 +47,20 @@ def render_summary(snapshot: dict) -> list[str]:
     ]
 
 
+def render_warnings(snapshot: dict) -> list[str]:
+    warnings = snapshot.get("warnings", [])
+    if not warnings:
+        return []
+    lines = [
+        "## Warnings",
+        "",
+    ]
+    for warning in warnings:
+        lines.append(f"- {warning}")
+    lines.append("")
+    return lines
+
+
 def render_known(snapshot: dict) -> list[str]:
     lines = [
         "## Known Providers",
@@ -235,6 +249,7 @@ def render_report(snapshot: dict) -> str:
     ]
     sections = [
         render_summary(snapshot),
+        render_warnings(snapshot),
         render_known(snapshot),
         render_installed(snapshot),
         render_ready(snapshot),

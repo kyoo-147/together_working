@@ -23,6 +23,7 @@ DEFAULT_RUNTIME_STATE = TOGETHER_DIR / "cache" / "runtime-state.json"
 DEFAULT_OVERRIDE = TOGETHER_DIR / "providers.override.json"
 DEFAULT_REPORT = TOGETHER_DIR / "reports" / "agent-report.md"
 DEFAULT_COOLDOWN_SECONDS = 900
+VERSION = "0.3.1"
 
 AUTH_FAIL_MARKERS = [
     "not configured",
@@ -55,6 +56,22 @@ def load_optional_json(path: Path, default: dict) -> dict:
     if not path.exists():
         return default
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_operator_json(path: Path, default: dict, label: str) -> tuple[dict, list[str]]:
+    if not path.exists():
+        return default, []
+    try:
+        return json.loads(path.read_text(encoding="utf-8-sig")), []
+    except json.JSONDecodeError as exc:
+        warning = (
+            f"Ignored {label}: invalid JSON at line {exc.lineno}, column {exc.colno}. "
+            "Using default config."
+        )
+        return default, [warning]
+    except OSError as exc:
+        warning = f"Ignored {label}: {exc}. Using default config."
+        return default, [warning]
 
 
 def ensure_parent(path: Path) -> None:
@@ -254,7 +271,7 @@ def load_runtime_state(path: Path, override_doc: dict) -> dict:
     state = load_optional_json(
         path,
         {
-            "version": "0.3.0",
+            "version": VERSION,
             "cooldown_seconds": DEFAULT_COOLDOWN_SECONDS,
             "recent_failures": {},
         },
@@ -400,14 +417,15 @@ def build_snapshot() -> dict:
     current_time = now_utc()
     profile_doc = load_json(PROFILE_PATH)
     routing_doc = load_json(ROUTING_PATH)
-    override_doc = load_optional_json(
+    override_doc, warnings = load_operator_json(
         DEFAULT_OVERRIDE,
         {
-            "version": "0.3.0",
+            "version": VERSION,
             "providers": {},
             "routing": {"tasks": {}, "departments": {}},
             "runtime": {"cooldown_seconds": DEFAULT_COOLDOWN_SECONDS},
         },
+        "provider override",
     )
     profile_doc, routing_doc = apply_overrides(profile_doc, routing_doc, override_doc)
 
@@ -455,11 +473,12 @@ def build_snapshot() -> dict:
     previous_last_known_good = load_last_known_good(DEFAULT_LAST_KNOWN_GOOD)
 
     snapshot = {
-        "version": "0.3.0",
+        "version": VERSION,
         "generated_at": current_time.isoformat(),
         "repo_root": str(REPO_ROOT),
         "cache_path": str(DEFAULT_CACHE),
         "report_path": str(DEFAULT_REPORT),
+        "warnings": warnings,
         "summary": {
             "known_providers": len(profile_doc["providers"]),
             "installed_clis": len(installed),

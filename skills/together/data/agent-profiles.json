@@ -1,5 +1,5 @@
 {
-  "version": "0.3.1",
+  "version": "0.5.0",
   "notes": [
     "Registry is hint-only. No benchmark claims.",
     "Known Providers count reflects ecosystem coverage, not local installation.",

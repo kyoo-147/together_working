@@ -238,6 +238,175 @@ def render_departments(snapshot: dict) -> list[str]:
     return lines
 
 
+def render_task_contracts(snapshot: dict) -> list[str]:
+    tasks = snapshot.get("governance", {}).get("tasks", [])
+    lines = [
+        "## Task Contracts",
+        "",
+        "| Task | Department | Role | Risk | Mode | Contract Status |",
+        "|---|---|---|---|---|---|",
+    ]
+    if not tasks:
+        lines.append("| - | - | - | - | - | - |")
+    else:
+        for task in tasks:
+            contract = task["contract"]
+            status = "valid" if not task.get("contract_errors") else "invalid"
+            lines.append(
+                f"| {task['task_id']} | {contract.get('department', '-')} | {contract.get('role', '-')} | "
+                f"{contract.get('risk_level', '-')} | {contract.get('enforcement_mode', '-')} | {status} |"
+            )
+    lines.append("")
+    return lines
+
+
+def render_task_status(snapshot: dict) -> list[str]:
+    tasks = snapshot.get("governance", {}).get("tasks", [])
+    lines = [
+        "## Task Status",
+        "",
+        "| Task | Current Status | Last Transition | Owner | Worker |",
+        "|---|---|---|---|---|",
+    ]
+    if not tasks:
+        lines.append("| - | - | - | - | - |")
+    else:
+        for task in tasks:
+            status = task.get("status") or {}
+            history = status.get("history", [])
+            last_transition = history[-1]["status"] if history else status.get("status", "-")
+            lines.append(
+                f"| {task['task_id']} | {status.get('status', '-')} | {last_transition} | "
+                f"{status.get('owner', '-')} | {status.get('assigned_worker') or '-'} |"
+            )
+    lines.append("")
+    return lines
+
+
+def render_scope_guard(snapshot: dict) -> list[str]:
+    tasks = snapshot.get("governance", {}).get("tasks", [])
+    lines = [
+        "## Scope Guard",
+        "",
+        "| Task | Status | Evidence |",
+        "|---|---|---|",
+    ]
+    if not tasks:
+        lines.append("| - | - | - |")
+    else:
+        for task in tasks:
+            verification = task.get("verification") or {}
+            check = verification.get("checks", {}).get("scope_compliance", {})
+            lines.append(
+                f"| {task['task_id']} | {check.get('status', '-')} | {join_or_dash(check.get('evidence', []), 2)} |"
+            )
+    lines.append("")
+    return lines
+
+
+def render_file_policy(snapshot: dict) -> list[str]:
+    tasks = snapshot.get("governance", {}).get("tasks", [])
+    lines = [
+        "## File Policy Validation",
+        "",
+        "| Task | Allowed Files | Denied Files | Evidence |",
+        "|---|---|---|---|",
+    ]
+    if not tasks:
+        lines.append("| - | - | - | - |")
+    else:
+        for task in tasks:
+            verification = task.get("verification") or {}
+            allowed = verification.get("checks", {}).get("allowed_files", {})
+            denied = verification.get("checks", {}).get("denied_files", {})
+            evidence = allowed.get("evidence", []) + denied.get("evidence", [])
+            lines.append(
+                f"| {task['task_id']} | {allowed.get('status', '-')} | {denied.get('status', '-')} | {join_or_dash(evidence, 2)} |"
+            )
+    lines.append("")
+    return lines
+
+
+def render_verification_results(snapshot: dict) -> list[str]:
+    tasks = snapshot.get("governance", {}).get("tasks", [])
+    lines = [
+        "## Verification Results",
+        "",
+        "| Task | Status | Verifier | Violations |",
+        "|---|---|---|---|",
+    ]
+    if not tasks:
+        lines.append("| - | - | - | - |")
+    else:
+        for task in tasks:
+            verification = task.get("verification") or {}
+            lines.append(
+                f"| {task['task_id']} | {verification.get('status', '-')} | {verification.get('verifier', '-')} | "
+                f"{join_or_dash(verification.get('violations', []), 2)} |"
+            )
+    lines.append("")
+    return lines
+
+
+def render_quality_gates(snapshot: dict) -> list[str]:
+    tasks = snapshot.get("governance", {}).get("tasks", [])
+    lines = [
+        "## Quality Gates",
+        "",
+        "| Task | Status | Risk | Blockers |",
+        "|---|---|---|---|",
+    ]
+    if not tasks:
+        lines.append("| - | - | - | - |")
+    else:
+        for task in tasks:
+            quality = task.get("quality") or {}
+            lines.append(
+                f"| {task['task_id']} | {quality.get('status', '-')} | {quality.get('risk_level', '-')} | "
+                f"{join_or_dash(quality.get('blockers', []), 2)} |"
+            )
+    lines.append("")
+    return lines
+
+
+def render_merge_decisions(snapshot: dict) -> list[str]:
+    tasks = snapshot.get("governance", {}).get("tasks", [])
+    lines = [
+        "## Merge Decisions",
+        "",
+        "| Task | Decision | Authority | Reason |",
+        "|---|---|---|---|",
+    ]
+    if not tasks:
+        lines.append("| - | - | - | - |")
+    else:
+        for task in tasks:
+            merge = task.get("merge") or {}
+            lines.append(
+                f"| {task['task_id']} | {merge.get('decision', '-')} | {merge.get('authority', '-')} | {merge.get('reason', '-')} |"
+            )
+    lines.append("")
+    return lines
+
+
+def render_department_dashboard(snapshot: dict) -> list[str]:
+    dashboard = snapshot.get("governance", {}).get("department_dashboard", {})
+    lines = [
+        "## Department Dashboard",
+        "",
+        "| Department | Task Count | Status Distribution |",
+        "|---|---:|---|",
+    ]
+    if not dashboard:
+        lines.append("| - | 0 | - |")
+    else:
+        for department, stats in dashboard.items():
+            distribution = ", ".join(f"{key}:{value}" for key, value in sorted(stats.get("statuses", {}).items()))
+            lines.append(f"| {department} | {stats.get('total', 0)} | {distribution or '-'} |")
+    lines.append("")
+    return lines
+
+
 def render_report(snapshot: dict) -> str:
     lines = [
         "# Together Agent Report",
@@ -259,6 +428,14 @@ def render_report(snapshot: dict) -> str:
         render_degraded(snapshot),
         render_tasks(snapshot),
         render_departments(snapshot),
+        render_task_contracts(snapshot),
+        render_task_status(snapshot),
+        render_scope_guard(snapshot),
+        render_file_policy(snapshot),
+        render_verification_results(snapshot),
+        render_quality_gates(snapshot),
+        render_merge_decisions(snapshot),
+        render_department_dashboard(snapshot),
         render_last_known_good(snapshot),
     ]
     for section in sections:

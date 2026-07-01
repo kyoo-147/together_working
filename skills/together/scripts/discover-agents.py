@@ -13,6 +13,10 @@ from pathlib import Path
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(REPO_ROOT / "src"))
+
+from together.contracts import contract_summary, load_task_records
+
 DATA_DIR = SKILL_ROOT / "data"
 PROFILE_PATH = DATA_DIR / "agent-profiles.json"
 ROUTING_PATH = DATA_DIR / "capability-routing.json"
@@ -22,8 +26,9 @@ DEFAULT_LAST_KNOWN_GOOD = TOGETHER_DIR / "cache" / "last-known-good.json"
 DEFAULT_RUNTIME_STATE = TOGETHER_DIR / "cache" / "runtime-state.json"
 DEFAULT_OVERRIDE = TOGETHER_DIR / "providers.override.json"
 DEFAULT_REPORT = TOGETHER_DIR / "reports" / "agent-report.md"
+DEFAULT_TASKS_DIR = TOGETHER_DIR / "tasks"
 DEFAULT_COOLDOWN_SECONDS = 900
-VERSION = "0.3.1"
+VERSION = "0.5.0"
 
 AUTH_FAIL_MARKERS = [
     "not configured",
@@ -389,6 +394,55 @@ def load_last_known_good(path: Path) -> dict | None:
     return load_json(path)
 
 
+def build_governance_snapshot(tasks_dir: Path = DEFAULT_TASKS_DIR) -> tuple[dict, list[str]]:
+    records, warnings = load_task_records(tasks_dir)
+    status_counts: dict[str, int] = {}
+    department_dashboard: dict[str, dict] = {}
+    tasks: list[dict] = []
+
+    for record in records:
+        contract = record["contract"]
+        status = record["status"] or {
+            "status": "planned",
+            "assigned_worker": None,
+            "department": contract.get("department"),
+            "owner": contract.get("owner"),
+            "history": [],
+        }
+        verification = record["verification"]
+        quality = record["quality"]
+        merge = record["merge"]
+        department = status.get("department") or contract.get("department") or "unknown"
+        task_status = status.get("status", "planned")
+
+        status_counts[task_status] = status_counts.get(task_status, 0) + 1
+        dashboard = department_dashboard.setdefault(department, {"total": 0, "statuses": {}})
+        dashboard["total"] += 1
+        dashboard["statuses"][task_status] = dashboard["statuses"].get(task_status, 0) + 1
+
+        tasks.append(
+            {
+                "task_id": record["task_id"],
+                "contract": contract_summary(contract),
+                "contract_errors": record["contract_errors"],
+                "status": status,
+                "verification": verification,
+                "quality": quality,
+                "merge": merge,
+            }
+        )
+
+    return {
+        "tasks_dir": str(tasks_dir),
+        "tasks": tasks,
+        "summary": {
+            "tracked_tasks": len(tasks),
+            "status_counts": status_counts,
+        },
+        "department_dashboard": department_dashboard,
+    }, warnings
+
+
 def build_last_known_good(snapshot: dict) -> dict:
     return {
         "version": snapshot["version"],
@@ -471,6 +525,8 @@ def build_snapshot() -> dict:
     best_available_workers = build_best_available(providers_with_rank)
     best_by_task = build_best_by_task(tasks, providers_by_id)
     previous_last_known_good = load_last_known_good(DEFAULT_LAST_KNOWN_GOOD)
+    governance, governance_warnings = build_governance_snapshot()
+    warnings.extend(governance_warnings)
 
     snapshot = {
         "version": VERSION,
@@ -498,6 +554,7 @@ def build_snapshot() -> dict:
             "override_path": str(DEFAULT_OVERRIDE),
             "runtime_state_path": str(DEFAULT_RUNTIME_STATE),
             "last_known_good_path": str(DEFAULT_LAST_KNOWN_GOOD),
+            "tasks_path": str(DEFAULT_TASKS_DIR),
             "cooldown_seconds": runtime_state["cooldown_seconds"],
             "recently_failed_agents": [
                 {
@@ -512,6 +569,7 @@ def build_snapshot() -> dict:
             "next_last_known_good": None,
         },
         "last_known_good": previous_last_known_good,
+        "governance": governance,
     }
 
     if is_healthy_snapshot(snapshot):

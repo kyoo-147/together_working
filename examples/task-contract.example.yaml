@@ -1,18 +1,27 @@
 task_id: TASK-123
+title: Harden routing fallback validation
+department: engineering
+role: implementer
+owner: codex
 scope:
-  - src/together/*
+  - src/together/*.py
+  - tests/test_*.py
 allowed_files:
-  - src/together/registry.py
-  - tests/test_registry.py
+  - src/together/routing.py
+  - tests/test_routing.py
 denied_files:
+  - src/together/registry.py
   - .env
   - "**/secrets/*"
 deliverables:
-  - updated registry validation
-  - updated tests
+  - updated routing fallback logic
+  - updated routing tests
 success_criteria:
-  - all validation commands pass
-  - no denied files changed
+  - routing tests pass
+  - degraded agents avoided during fallback
 reviewer_required: true
 verification_required: true
-
+merge_authority: codex
+risk_level: medium
+enforcement_mode: warn
+unknown_files_policy: needs_review

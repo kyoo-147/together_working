@@ -1,0 +1,29 @@
+{
+  "task_id": "TASK-123",
+  "status": "passed",
+  "assigned_worker": "cmdc",
+  "department": "engineering",
+  "owner": "codex",
+  "blocked_reason": null,
+  "history": [
+    {
+      "status": "planned",
+      "at": "2026-07-01T07:45:00+00:00",
+      "owner": "codex"
+    },
+    {
+      "status": "assigned",
+      "at": "2026-07-01T07:47:00+00:00",
+      "owner": "codex",
+      "worker": "cmdc",
+      "blocked_reason": null
+    },
+    {
+      "status": "passed",
+      "at": "2026-07-01T08:05:00+00:00",
+      "owner": "codex",
+      "worker": "cmdc",
+      "blocked_reason": null
+    }
+  ]
+}

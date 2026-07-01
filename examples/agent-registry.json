@@ -1,5 +1,5 @@
 {
-  "version": "0.3.1",
+  "version": "0.5.0",
   "generated_at": "2026-07-01T00:00:00+00:00",
   "summary": {
     "known_providers": 48,
@@ -142,7 +142,7 @@
     ],
     "degraded_agents": ["codex"],
     "runtime_state": {
-      "version": "0.3.1",
+      "version": "0.5.0",
       "cooldown_seconds": 900,
       "recent_failures": {
         "codex": {
@@ -154,8 +154,97 @@
     },
     "next_last_known_good": null
   },
+  "governance": {
+    "tasks_dir": ".together/tasks",
+    "tasks": [
+      {
+        "task_id": "TASK-123",
+        "contract": {
+          "task_id": "TASK-123",
+          "title": "Harden routing fallback validation",
+          "department": "engineering",
+          "role": "implementer",
+          "owner": "codex",
+          "risk_level": "medium",
+          "enforcement_mode": "warn",
+          "allowed_files": ["src/together/routing.py", "tests/test_routing.py"],
+          "denied_files": ["src/together/registry.py"]
+        },
+        "contract_errors": [],
+        "status": {
+          "task_id": "TASK-123",
+          "status": "passed",
+          "assigned_worker": "cmdc",
+          "department": "engineering",
+          "owner": "codex",
+          "blocked_reason": null,
+          "history": [
+            {"status": "planned", "at": "2026-07-01T07:45:00+00:00", "owner": "codex"},
+            {"status": "assigned", "at": "2026-07-01T07:47:00+00:00", "owner": "codex", "worker": "cmdc", "blocked_reason": null},
+            {"status": "passed", "at": "2026-07-01T08:05:00+00:00", "owner": "codex", "worker": "cmdc", "blocked_reason": null}
+          ]
+        },
+        "verification": {
+          "task_id": "TASK-123",
+          "status": "PASS",
+          "verifier": "codex",
+          "department": "verification",
+          "checks": {
+            "scope_compliance": {"status": "PASS", "evidence": ["inside scope: src/together/routing.py, tests/test_routing.py"], "notes": []},
+            "allowed_files": {"status": "PASS", "evidence": ["allowed_matched: src/together/routing.py, tests/test_routing.py"], "notes": []},
+            "denied_files": {"status": "PASS", "evidence": [], "notes": []},
+            "acceptance_criteria": {"status": "PASS", "evidence": ["routing tests pass", "degraded agents avoided during fallback"], "notes": []},
+            "routing_correctness": {"status": "PASS", "evidence": ["engineering route selected ready worker"], "notes": []},
+            "architecture_compliance": {"status": "PASS", "evidence": ["no registry changes"], "notes": []}
+          },
+          "violations": [],
+          "notes": [],
+          "timestamp": "2026-07-01T08:00:00+00:00"
+        },
+        "quality": {
+          "task_id": "TASK-123",
+          "status": "PASS",
+          "risk_level": "medium",
+          "required_checks": ["review", "verification"],
+          "check_results": {
+            "verification": "PASS",
+            "success_criteria": "PASS",
+            "review": "PASS",
+            "task_status": "passed"
+          },
+          "blockers": []
+        },
+        "merge": {
+          "task_id": "TASK-123",
+          "decision": "MERGE",
+          "authority": "codex",
+          "based_on": {
+            "verification_status": "PASS",
+            "quality_gate_status": "PASS",
+            "task_status": "passed"
+          },
+          "reason": "verification passed, quality gate passed, task passed",
+          "timestamp": "2026-07-01T08:06:00+00:00"
+        }
+      }
+    ],
+    "summary": {
+      "tracked_tasks": 1,
+      "status_counts": {
+        "passed": 1
+      }
+    },
+    "department_dashboard": {
+      "engineering": {
+        "total": 1,
+        "statuses": {
+          "passed": 1
+        }
+      }
+    }
+  },
   "last_known_good": {
-    "version": "0.3.1",
+    "version": "0.5.0",
     "timestamp": "2026-07-01T00:00:00+00:00",
     "summary": {
       "known_providers": 48,
@@ -182,4 +271,3 @@
     }
   }
 }
-

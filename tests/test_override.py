@@ -19,27 +19,26 @@ def load_module():
 def test_override_parser_handles_valid_json(tmp_path: Path) -> None:
     module = load_module()
     path = tmp_path / "override.json"
-    path.write_text(json.dumps({"version": "0.3.1", "providers": {}}), encoding="utf-8")
+    path.write_text(json.dumps({"version": "0.5.0", "providers": {}}), encoding="utf-8")
     data, warnings = module.load_operator_json(path, {"providers": {}}, "provider override")
     assert warnings == []
-    assert data["version"] == "0.3.1"
+    assert data["version"] == "0.5.0"
 
 
 def test_override_parser_handles_utf8_bom(tmp_path: Path) -> None:
     module = load_module()
     path = tmp_path / "override.json"
-    path.write_bytes(("\ufeff" + json.dumps({"version": "0.3.1", "providers": {}})).encode("utf-8"))
+    path.write_bytes(("\ufeff" + json.dumps({"version": "0.5.0", "providers": {}})).encode("utf-8"))
     data, warnings = module.load_operator_json(path, {"providers": {}}, "provider override")
     assert warnings == []
-    assert data["version"] == "0.3.1"
+    assert data["version"] == "0.5.0"
 
 
 def test_override_parser_handles_malformed_json(tmp_path: Path) -> None:
     module = load_module()
     path = tmp_path / "override.json"
-    path.write_text("{\n  \"version\": \"0.3.1\",\n", encoding="utf-8")
+    path.write_text("{\n  \"version\": \"0.5.0\",\n", encoding="utf-8")
     data, warnings = module.load_operator_json(path, {"providers": {}}, "provider override")
     assert data == {"providers": {}}
     assert warnings
     assert "Ignored provider override" in warnings[0]
-

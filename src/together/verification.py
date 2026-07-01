@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 VERIFICATION_CHECKS = (
-    "scope compliance",
-    "allowed files",
-    "denied files",
-    "acceptance criteria",
-    "routing correctness",
-    "architecture compliance",
+    "scope_compliance",
+    "allowed_files",
+    "denied_files",
+    "acceptance_criteria",
+    "routing_correctness",
+    "architecture_compliance",
 )
 
 VERIFICATION_OUTCOMES = ("PASS", "REJECT", "NEEDS_REVIEW")
-

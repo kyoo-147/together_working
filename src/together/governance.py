@@ -2,6 +2,10 @@ from __future__ import annotations
 
 TASK_CONTRACT_FIELDS = (
     "task_id",
+    "title",
+    "department",
+    "role",
+    "owner",
     "scope",
     "allowed_files",
     "denied_files",
@@ -9,6 +13,10 @@ TASK_CONTRACT_FIELDS = (
     "success_criteria",
     "reviewer_required",
     "verification_required",
+    "merge_authority",
+    "risk_level",
+    "enforcement_mode",
+    "unknown_files_policy",
 )
 
 PERMISSION_ROLES = {
@@ -21,3 +29,6 @@ PERMISSION_ROLES = {
 
 CODEX_ROLE = ("planner", "coordinator", "verifier", "integrator", "merge authority")
 
+RISK_LEVELS = ("low", "medium", "high")
+
+ENFORCEMENT_MODES = ("warn", "strict")

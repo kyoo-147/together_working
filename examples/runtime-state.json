@@ -1,5 +1,5 @@
 {
-  "version": "0.3.1",
+  "version": "0.5.0",
   "cooldown_seconds": 900,
   "recent_failures": {
     "codex": {
@@ -9,4 +9,3 @@
     }
   }
 }
-

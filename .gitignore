@@ -5,4 +5,6 @@ skills/together/data/latest-registry.json
 !.together/cache/.gitkeep
 .together/reports/*
 !.together/reports/.gitkeep
+.together/tasks/*
+!.together/tasks/.gitkeep
 .together/runtime-state.json

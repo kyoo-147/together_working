@@ -118,6 +118,16 @@ pub fn start_server(
                                             });
                                         }
                                         
+                                        if let Event::TaskRouted { task_id, .. } = &event2 {
+                                            crate::supervisor::ExecutionSupervisor::run_task(
+                                                task_id.clone(),
+                                                contract,
+                                                store.clone(),
+                                                subscribers.clone()
+                                            );
+                                        }
+
+                                        
                                         let resp = Response::Ack { task_id };
                                         let resp_str = serde_json::to_string(&resp).unwrap() + "\n";
                                         if let Err(e) = conn.write_all(resp_str.as_bytes()) {

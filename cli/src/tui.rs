@@ -77,6 +77,14 @@ pub fn run_tui() -> Result<(), io::Error> {
                     state.routed_tasks.insert(task_id, agent_name);
                 }
                 Event::TaskCreated { .. } => {}
+                Event::PtyOutput { .. } => {}
+                Event::TaskCompleted { task_id, success } => {
+                    let suffix = if success { " [Completed]" } else { " [Failed]" };
+                    if let Some(agent) = state.routed_tasks.get(&task_id) {
+                        let new_val = format!("{}{}", agent, suffix);
+                        state.routed_tasks.insert(task_id.clone(), new_val);
+                    }
+                }
             }
         }
 

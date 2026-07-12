@@ -21,6 +21,8 @@ pub enum Event {
     TaskQueued { task_id: String, target: RoutingTarget },
     TaskRouted { task_id: String, agent_name: String },
     AgentStatusChanged { agent_name: String, status: AgentStatus },
+    PtyOutput { task_id: String, chunk: String },
+    TaskCompleted { task_id: String, success: bool },
 }
 
 #[cfg(test)]

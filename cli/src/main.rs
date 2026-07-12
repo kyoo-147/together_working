@@ -1,5 +1,7 @@
 mod tui;
 mod client;
+pub mod ui;
+
 use clap::{Parser, Subcommand};
 use core::ipc::{Command, Response};
 use core::events::Event;

@@ -2,6 +2,8 @@ mod tui;
 mod client;
 use clap::{Parser, Subcommand};
 use core::ipc::{Command, Response};
+use core::events::Event;
+use std::io::Write;
 
 #[derive(Parser)]
 #[command(name = "together", about = "AI Department Orchestrator")]
@@ -15,6 +17,9 @@ enum Commands {
     Daemon,
     Run {
         file: String,
+    },
+    Attach {
+        task_id: String,
     },
 }
 
@@ -53,6 +58,32 @@ fn main() {
         }
         Some(Commands::Run { file }) => {
             run_task(file);
+        }
+        Some(Commands::Attach { task_id }) => {
+            match client::subscribe(client::DEFAULT_SOCKET_NAME) {
+                Ok(rx) => {
+                    for event_res in rx {
+                        match event_res {
+                            Ok(Event::PtyOutput { task_id: tid, chunk }) if tid == *task_id => {
+                                print!("{chunk}");
+                                let _ = std::io::stdout().flush();
+                            }
+                            Ok(Event::TaskCompleted { task_id: tid, success }) if tid == *task_id => {
+                                println!("\n[Task {} completed with success={}]", tid, success);
+                                break;
+                            }
+                            Ok(_) => {}
+                            Err(_) => {
+                                println!("\n[Connection to daemon lost]");
+                                break;
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Failed to connect to daemon: {}", e);
+                }
+            }
         }
         None => {
             if let Err(err) = tui::run_tui() {

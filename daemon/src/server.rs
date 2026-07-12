@@ -120,32 +120,33 @@ pub fn start_server(
                                         
                                         let resp = Response::Ack { task_id };
                                         let resp_str = serde_json::to_string(&resp).unwrap() + "\n";
-                                        let _ = conn.write_all(resp_str.as_bytes());
+                                        if let Err(e) = conn.write_all(resp_str.as_bytes()) {
+                                            eprintln!("Failed to write response: {}", e);
+                                        }
                                     }
                                     Err(e) => {
                                         let resp = Response::Error { message: e.to_string() };
                                         let resp_str = serde_json::to_string(&resp).unwrap() + "\n";
-                                        let _ = conn.write_all(resp_str.as_bytes());
+                                        if let Err(e) = conn.write_all(resp_str.as_bytes()) {
+                                            eprintln!("Failed to write response: {}", e);
+                                        }
                                     }
                                 }
                             }
                             Command::Sub => {
-                                {
-                                    let store_lock = store.lock().unwrap();
-                                    if let Ok(events) = store_lock.get_all() {
-                                        for event in events {
-                                            let event_str = serde_json::to_string(&event).unwrap() + "\n";
-                                            if conn.write_all(event_str.as_bytes()).is_err() {
-                                                return;
-                                            }
-                                        }
-                                    }
-                                }
-                                
                                 let (tx, rx) = channel::<Event>();
-                                {
+                                let events_to_send = {
+                                    let store_lock = store.lock().unwrap();
                                     let mut subs = subscribers.lock().unwrap();
                                     subs.push(tx);
+                                    store_lock.get_all().unwrap_or_default()
+                                };
+                                
+                                for event in events_to_send {
+                                    let event_str = serde_json::to_string(&event).unwrap() + "\n";
+                                    if conn.write_all(event_str.as_bytes()).is_err() {
+                                        return;
+                                    }
                                 }
                                 
                                 while let Ok(event) = rx.recv() {
@@ -159,7 +160,9 @@ pub fn start_server(
                     } else {
                         let resp = Response::Error { message: "Invalid command format".to_string() };
                         let resp_str = serde_json::to_string(&resp).unwrap() + "\n";
-                        let _ = conn.write_all(resp_str.as_bytes());
+                        if let Err(e) = conn.write_all(resp_str.as_bytes()) {
+                            eprintln!("Failed to write response: {}", e);
+                        }
                     }
                 }
             });

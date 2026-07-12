@@ -162,6 +162,7 @@ dependencies = [
  "crossterm",
  "interprocess",
  "ratatui",
+ "serde_json",
 ]
 
 [[package]]

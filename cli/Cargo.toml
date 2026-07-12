@@ -12,4 +12,5 @@ path = "src/main.rs"
 clap = { version = "4.6.1", features = ["derive"] }
 crossterm = "0.27"
 ratatui = "0.26"
+interprocess = "2.2.1"
 core = { path = "../core" }

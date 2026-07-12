@@ -1,4 +1,5 @@
 mod tui;
+mod client;
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]

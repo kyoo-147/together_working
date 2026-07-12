@@ -20,7 +20,10 @@ fn main() {
             println!("Starting daemon...");
         }
         None => {
-            tui::run_tui().unwrap();
+            if let Err(err) = tui::run_tui() {
+                eprintln!("Application error: {}", err);
+                std::process::exit(1);
+            }
         }
     }
 }

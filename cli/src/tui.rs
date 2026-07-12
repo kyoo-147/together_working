@@ -42,16 +42,21 @@ pub fn run_tui() -> Result<(), io::Error> {
 
     let (tx, rx) = mpsc::channel();
 
+    let stream = match client::subscribe(client::DEFAULT_SOCKET_NAME) {
+        Ok(s) => s,
+        Err(e) => {
+            return Err(io::Error::new(io::ErrorKind::ConnectionRefused, format!("Failed to connect to daemon (is it running?): {}", e)));
+        }
+    };
+
     std::thread::spawn(move || {
-        if let Ok(stream) = client::subscribe(client::DEFAULT_SOCKET_NAME) {
-            for event_res in stream {
-                if let Ok(event) = event_res {
-                    if tx.send(event).is_err() {
-                        break;
-                    }
-                } else {
+        for event_res in stream {
+            if let Ok(event) = event_res {
+                if tx.send(event).is_err() {
                     break;
                 }
+            } else {
+                break;
             }
         }
     });

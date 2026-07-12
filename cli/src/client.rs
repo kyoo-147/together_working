@@ -20,10 +20,14 @@ mod tests {
         let sub_cmd = Command::Sub;
         let sub_str = serde_json::to_string(&sub_cmd).unwrap();
         assert_eq!(sub_str, "\"Sub\"");
+        let deserialized_sub: Command = serde_json::from_str(&sub_str).unwrap();
+        assert!(matches!(deserialized_sub, Command::Sub));
         
         let create_cmd = Command::CreateTask { yaml: "test".to_string() };
         let create_str = serde_json::to_string(&create_cmd).unwrap();
         assert_eq!(create_str, "{\"CreateTask\":{\"yaml\":\"test\"}}");
+        let deserialized_create: Command = serde_json::from_str(&create_str).unwrap();
+        assert!(matches!(deserialized_create, Command::CreateTask { yaml } if yaml == "test"));
     }
 }
 

@@ -15,3 +15,6 @@ benchmarks/results/*
 !benchmarks/results/.gitkeep
 benchmarks/reports/*
 !benchmarks/reports/.gitkeep
+
+/target
+**/*.rs.bk

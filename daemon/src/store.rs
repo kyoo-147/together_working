@@ -87,7 +87,14 @@ mod tests {
         
         {
             let store = EventStore::new(path.to_str().unwrap()).unwrap();
-            let event1 = Event::TaskCreated { task_id: "2".to_string(), contract_path: "/path/to/contract".to_string() };
+            let event1 = Event::TaskCreated { 
+                task_id: "2".to_string(), 
+                contract: core::contracts::TaskContract {
+                    task_id: "test".to_string(),
+                    department: None,
+                    agent: None,
+                }
+            };
             let event2 = Event::TaskRouted { task_id: "2".to_string(), agent_name: "agent1".to_string() };
             
             store.append(&event1).unwrap();

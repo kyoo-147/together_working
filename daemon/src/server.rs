@@ -41,9 +41,9 @@ mod tests {
         // Verify the response
         let event: Event = serde_json::from_str(&response).unwrap();
         match event {
-            Event::TaskCreated { task_id, contract_path } => {
+            Event::TaskCreated { task_id, contract } => {
                 assert_eq!(task_id, "1");
-                assert_eq!(contract_path, "test_contract.rs");
+                assert_eq!(contract.task_id, "test_contract.rs");
             }
             _ => panic!("Unexpected event type"),
         }
@@ -71,7 +71,14 @@ pub fn start_server(socket_name: &str) -> std::io::Result<()> {
                     if bytes == 0 { break; }
                     println!("Daemon received: {}", buffer);
                     // TODO: Echo back as TaskCreated event for now - this is a temporary stub
-                    let event = core::events::Event::TaskCreated { task_id: "1".to_string(), contract_path: buffer.trim().to_string() };
+                    let event = core::events::Event::TaskCreated { 
+                        task_id: "1".to_string(), 
+                        contract: core::contracts::TaskContract {
+                            task_id: buffer.trim().to_string(),
+                            department: None,
+                            agent: None,
+                        }
+                    };
                     let response = serde_json::to_string(&event).unwrap() + "\n";
                     if let Err(e) = conn.write_all(response.as_bytes()) {
                         eprintln!("Failed to write to client: {}", e);

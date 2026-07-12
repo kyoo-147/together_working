@@ -90,7 +90,7 @@ mod tests {
             let event1 = Event::TaskCreated { 
                 task_id: "2".to_string(), 
                 contract: core::contracts::TaskContract {
-                    task_id: "test".to_string(),
+                    task_id: "2".to_string(),
                     department: None,
                     agent: None,
                 }

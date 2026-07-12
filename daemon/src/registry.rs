@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use core::events::{RoutingTarget, AgentStatus};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -8,12 +8,12 @@ pub struct AgentInfo {
 }
 
 pub struct AgentRegistry {
-    agents: HashMap<String, AgentInfo>,
+    agents: BTreeMap<String, AgentInfo>,
 }
 
 impl AgentRegistry {
     pub fn new() -> Self {
-        Self { agents: HashMap::new() }
+        Self { agents: BTreeMap::new() }
     }
 
     pub fn register_agent(&mut self, name: String, department: String) {

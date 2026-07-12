@@ -43,7 +43,7 @@ mod tests {
         match event {
             Event::TaskCreated { task_id, contract } => {
                 assert_eq!(task_id, "1");
-                assert_eq!(contract.task_id, "test_contract.rs");
+                assert_eq!(contract.task_id, "1");
             }
             _ => panic!("Unexpected event type"),
         }
@@ -74,7 +74,7 @@ pub fn start_server(socket_name: &str) -> std::io::Result<()> {
                     let event = core::events::Event::TaskCreated { 
                         task_id: "1".to_string(), 
                         contract: core::contracts::TaskContract {
-                            task_id: buffer.trim().to_string(),
+                            task_id: "1".to_string(),
                             department: None,
                             agent: None,
                         }

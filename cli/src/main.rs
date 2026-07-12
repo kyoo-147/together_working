@@ -1,3 +1,4 @@
+mod tui;
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -19,7 +20,7 @@ fn main() {
             println!("Starting daemon...");
         }
         None => {
-            println!("Starting TUI...");
+            tui::run_tui().unwrap();
         }
     }
 }

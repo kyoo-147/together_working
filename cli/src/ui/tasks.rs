@@ -1,5 +1,6 @@
-use super::format::{self, panel_block, selected_style, MUTED, PANEL, TEXT};
+use super::format;
 use super::state::{TaskStatus, TuiState};
+use super::theme::Theme;
 use ratatui::{
     layout::Rect,
     style::{Modifier, Style},
@@ -8,17 +9,17 @@ use ratatui::{
     Frame,
 };
 
-pub fn draw(f: &mut Frame, area: Rect, state: &TuiState) {
+pub fn draw(f: &mut Frame, area: Rect, state: &TuiState, theme: &Theme) {
     let mut items = vec![
         ListItem::new(Line::from(vec![Span::styled(
-            "spaces",
-            Style::default().fg(MUTED).bg(PANEL),
+            "Project",
+            Style::default().fg(theme.muted).bg(theme.panel),
         )])),
         ListItem::new(Line::from(vec![Span::styled(
-            "  Product",
+            "  Codex app",
             Style::default()
-                .fg(TEXT)
-                .bg(PANEL)
+                .fg(theme.text)
+                .bg(theme.panel)
                 .add_modifier(Modifier::BOLD),
         )])),
     ];
@@ -26,8 +27,15 @@ pub fn draw(f: &mut Frame, area: Rect, state: &TuiState) {
         items.extend([
             ListItem::new(Line::from("")),
             ListItem::new(Line::from(vec![Span::styled(
-                "departments",
-                Style::default().fg(MUTED).bg(PANEL),
+                "Sources",
+                Style::default().fg(theme.muted).bg(theme.panel),
+            )])),
+            ListItem::new(Line::from("  Codex app")),
+            ListItem::new(Line::from("  Together chat")),
+            ListItem::new(Line::from("")),
+            ListItem::new(Line::from(vec![Span::styled(
+                "Departments",
+                Style::default().fg(theme.muted).bg(theme.panel),
             )])),
             ListItem::new(Line::from("  engineering")),
             ListItem::new(Line::from("  integration")),
@@ -38,8 +46,8 @@ pub fn draw(f: &mut Frame, area: Rect, state: &TuiState) {
         items.push(ListItem::new(Line::from("")));
     }
     items.push(ListItem::new(Line::from(vec![Span::styled(
-        "tasks",
-        Style::default().fg(MUTED).bg(PANEL),
+        "Tasks",
+        Style::default().fg(theme.muted).bg(theme.panel),
     )])));
 
     let mut task_ids = state.tasks.keys().cloned().collect::<Vec<_>>();
@@ -62,27 +70,29 @@ pub fn draw(f: &mut Frame, area: Rect, state: &TuiState) {
             status_label(status)
         );
         let style = if selected {
-            selected_style()
+            format::themed_selected_style(theme)
         } else {
-            Style::default().fg(TEXT).bg(PANEL)
+            Style::default().fg(theme.text).bg(theme.panel)
         };
         items.push(ListItem::new(Line::from(row)).style(style));
-        items.push(ListItem::new(Line::from(meta)).style(Style::default().fg(MUTED).bg(PANEL)));
+        items.push(
+            ListItem::new(Line::from(meta)).style(Style::default().fg(theme.muted).bg(theme.panel)),
+        );
     }
     if state.tasks.is_empty() {
         items.push(
-            ListItem::new(Line::from("  n  new contract")).style(
+            ListItem::new(Line::from("  n  new task")).style(
                 Style::default()
-                    .fg(format::ACCENT)
-                    .bg(PANEL)
+                    .fg(theme.accent)
+                    .bg(theme.panel)
                     .add_modifier(Modifier::BOLD),
             ),
         );
     }
 
     let list = List::new(items)
-        .block(panel_block("workspace"))
-        .style(Style::default().fg(TEXT).bg(PANEL));
+        .block(format::themed_panel_block("Project", theme))
+        .style(Style::default().fg(theme.text).bg(theme.panel));
     f.render_widget(list, area);
 }
 

@@ -1,5 +1,6 @@
-use super::format::{self, panel_block, status_style, MUTED, PANEL, TEXT};
+use super::format;
 use super::state::TuiState;
+use super::theme::Theme;
 use core::events::AgentStatus;
 use ratatui::{
     layout::Rect,
@@ -9,7 +10,7 @@ use ratatui::{
     Frame,
 };
 
-pub fn draw(f: &mut Frame, area: Rect, state: &TuiState) {
+pub fn draw(f: &mut Frame, area: Rect, state: &TuiState, theme: &Theme) {
     let mut agents = state.agents.iter().collect::<Vec<_>>();
     agents.sort_by_key(|(name, status)| (agent_sort_key(status), preferred_rank(name)));
     let is_empty = agents.is_empty();
@@ -22,37 +23,37 @@ pub fn draw(f: &mut Frame, area: Rect, state: &TuiState) {
             ListItem::new(Line::from(vec![
                 Span::styled(
                     format!("[{}] ", format::status_label(status)),
-                    status_style(status),
+                    format::themed_status_style(status, theme),
                 ),
                 Span::styled(
                     row.replace(
                         &format!("{} - {} - ", name, format::status_label(status)),
                         "",
                     ),
-                    Style::default().fg(TEXT).bg(PANEL),
+                    Style::default().fg(theme.text).bg(theme.panel),
                 ),
             ]))
-            .style(Style::default().bg(PANEL))
+            .style(Style::default().bg(theme.panel))
         })
         .collect::<Vec<_>>();
     if is_empty {
         items.push(ListItem::new(Line::from(vec![Span::styled(
             "no agents discovered",
-            Style::default().fg(MUTED).bg(PANEL),
+            Style::default().fg(theme.muted).bg(theme.panel),
         )])));
     }
     items.push(ListItem::new(Line::from("")));
     items.push(ListItem::new(Line::from(vec![Span::styled(
         "routing priority: codex, cmdc, agy, claude",
         Style::default()
-            .fg(MUTED)
-            .bg(PANEL)
+            .fg(theme.muted)
+            .bg(theme.panel)
             .add_modifier(Modifier::ITALIC),
     )])));
 
     let list = List::new(items)
-        .block(panel_block("agent pool"))
-        .style(Style::default().fg(TEXT).bg(PANEL));
+        .block(format::themed_panel_block("Agents", theme))
+        .style(Style::default().fg(theme.text).bg(theme.panel));
     f.render_widget(list, area);
 }
 

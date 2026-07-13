@@ -4,6 +4,8 @@ use ratatui::{
     widgets::{Block, Borders},
 };
 
+use super::theme::Theme;
+
 pub const BG: Color = Color::Rgb(224, 229, 242);
 pub const PANEL: Color = Color::Rgb(237, 241, 249);
 pub const PANEL_ALT: Color = Color::Rgb(214, 221, 237);
@@ -36,6 +38,47 @@ pub fn panel_block(title: &str) -> Block<'_> {
         .borders(Borders::ALL)
         .border_style(Style::default().fg(BORDER).bg(PANEL))
         .style(panel_style())
+}
+
+pub fn themed_base_style(theme: &Theme) -> Style {
+    Style::default().fg(theme.text).bg(theme.bg)
+}
+
+pub fn themed_panel_style(theme: &Theme) -> Style {
+    Style::default().fg(theme.text).bg(theme.panel)
+}
+
+pub fn themed_selected_style(theme: &Theme) -> Style {
+    Style::default()
+        .fg(if theme.dark {
+            Color::Black
+        } else {
+            Color::White
+        })
+        .bg(theme.accent)
+        .add_modifier(Modifier::BOLD)
+}
+
+pub fn themed_panel_block<'a>(title: &'a str, theme: &Theme) -> Block<'a> {
+    Block::default()
+        .title(title)
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(theme.border).bg(theme.panel))
+        .style(themed_panel_style(theme))
+}
+
+pub fn themed_status_style(status: &AgentStatus, theme: &Theme) -> Style {
+    let color = match status {
+        AgentStatus::Ready => theme.ready,
+        AgentStatus::Busy => theme.accent,
+        AgentStatus::Degraded { .. } | AgentStatus::Cooldown { .. } => theme.warn,
+        AgentStatus::Offline | AgentStatus::Blocked => theme.danger,
+        AgentStatus::Unknown => theme.muted,
+    };
+    Style::default()
+        .fg(color)
+        .bg(theme.panel)
+        .add_modifier(Modifier::BOLD)
 }
 
 pub fn status_label(status: &AgentStatus) -> &'static str {

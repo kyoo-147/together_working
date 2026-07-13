@@ -1,5 +1,7 @@
+use core::chat::{ChatMessage, CommandProposal, ProposalStatus};
 use core::contracts::TaskContract;
 use core::events::{AgentStatus, Event, RoutingTarget};
+use core::settings::UiSettings;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -30,13 +32,45 @@ pub struct TuiState {
     pub logs: HashMap<String, Vec<String>>,
     pub route_decisions: HashMap<String, String>,
     pub timelines: HashMap<String, Vec<String>>,
+    pub chat_messages: Vec<ChatMessage>,
+    pub proposals: HashMap<String, CommandProposal>,
+    pub latest_proposal_id: Option<String>,
+    pub needs_attention: Vec<String>,
+    pub settings: UiSettings,
     pub selected_task_id: Option<String>,
 }
 
 impl TuiState {
     pub fn process_event(&mut self, event: Event) {
         match event {
+            Event::ChatMessageReceived { source, text } => {
+                self.chat_messages.push(ChatMessage { source, text });
+            }
+            Event::CommandProposalCreated { proposal } => {
+                self.latest_proposal_id = Some(proposal.proposal_id.clone());
+                self.proposals
+                    .insert(proposal.proposal_id.clone(), proposal);
+            }
+            Event::CommandProposalConfirmed { proposal_id } => {
+                if let Some(proposal) = self.proposals.get_mut(&proposal_id) {
+                    proposal.status = ProposalStatus::Confirmed;
+                }
+            }
+            Event::CommandProposalRejected { proposal_id } => {
+                if let Some(proposal) = self.proposals.get_mut(&proposal_id) {
+                    proposal.status = ProposalStatus::Rejected;
+                }
+            }
+            Event::SettingsUpdated { settings } => {
+                self.settings = settings;
+            }
+            Event::NeedsAttentionChanged { items } => {
+                self.needs_attention = items;
+            }
             Event::AgentStatusChanged { agent_name, status } => {
+                if let AgentStatus::Degraded { reason } = &status {
+                    self.push_attention(format!("{agent_name} degraded: {reason}"));
+                }
                 self.agents.insert(agent_name, status);
             }
             Event::TaskCreated { task_id, contract } => {
@@ -120,6 +154,9 @@ impl TuiState {
                 if let Some(detail) = self.task_details.get_mut(&task_id) {
                     detail.approval_blocked = !success;
                 }
+                if !success {
+                    self.push_attention(format!("verification failed: {summary}"));
+                }
                 self.logs
                     .entry(task_id.clone())
                     .or_default()
@@ -180,6 +217,13 @@ impl TuiState {
         self.timelines.get(task_id).cloned().unwrap_or_default()
     }
 
+    pub fn latest_pending_proposal(&self) -> Option<&CommandProposal> {
+        self.latest_proposal_id
+            .as_deref()
+            .and_then(|id| self.proposals.get(id))
+            .filter(|proposal| proposal.status == ProposalStatus::Pending)
+    }
+
     fn upsert_contract_detail(&mut self, task_id: &str, contract: &TaskContract) {
         self.task_details.insert(
             task_id.to_string(),
@@ -206,6 +250,16 @@ impl TuiState {
             .or_default()
             .push(entry.to_string());
     }
+
+    fn push_attention(&mut self, item: String) {
+        if !self
+            .needs_attention
+            .iter()
+            .any(|existing| existing == &item)
+        {
+            self.needs_attention.push(item);
+        }
+    }
 }
 
 fn split_log_chunk(chunk: &str) -> Vec<String> {
@@ -223,6 +277,7 @@ fn split_log_chunk(chunk: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use core::chat::{ChatSource, CommandProposal, ProposalAction};
 
     #[test]
     fn test_process_event_task_lifecycle() {
@@ -348,5 +403,56 @@ mod tests {
             .timeline_for("t1")
             .iter()
             .any(|entry| entry.contains("route cmdc score=182")));
+    }
+
+    #[test]
+    fn test_chat_proposal_does_not_create_task_before_confirmation() {
+        let mut state = TuiState::default();
+        let proposal = CommandProposal {
+            proposal_id: "p1".into(),
+            source: ChatSource::TogetherChat,
+            title: "Create task".into(),
+            summary: "preview only".into(),
+            action: ProposalAction::CreateTask {
+                yaml: "task_id: draft".into(),
+            },
+            preview: None,
+            status: ProposalStatus::Pending,
+        };
+
+        state.process_event(Event::ChatMessageReceived {
+            source: ChatSource::TogetherChat,
+            text: "build a landing page".into(),
+        });
+        state.process_event(Event::CommandProposalCreated { proposal });
+
+        assert_eq!(state.chat_messages.len(), 1);
+        assert_eq!(state.latest_pending_proposal().unwrap().proposal_id, "p1");
+        assert!(state.tasks.is_empty());
+
+        state.process_event(Event::CommandProposalRejected {
+            proposal_id: "p1".into(),
+        });
+        assert!(state.latest_pending_proposal().is_none());
+        assert!(state.tasks.is_empty());
+    }
+
+    #[test]
+    fn test_settings_and_needs_attention_events_update_state() {
+        let mut state = TuiState::default();
+
+        state.process_event(Event::SettingsUpdated {
+            settings: core::settings::UiSettings {
+                theme_preset: "Ocean Blue".into(),
+                custom_bg: None,
+                custom_main: None,
+            },
+        });
+        state.process_event(Event::NeedsAttentionChanged {
+            items: vec!["codex degraded: Access is denied".into()],
+        });
+
+        assert_eq!(state.settings.theme_preset, "Ocean Blue");
+        assert_eq!(state.needs_attention.len(), 1);
     }
 }

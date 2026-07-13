@@ -1,4 +1,6 @@
+use crate::chat::{ChatSource, CommandProposal};
 use crate::contracts::TaskContract;
+use crate::settings::UiSettings;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -21,6 +23,25 @@ pub enum AgentStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Event {
+    ChatMessageReceived {
+        source: ChatSource,
+        text: String,
+    },
+    CommandProposalCreated {
+        proposal: CommandProposal,
+    },
+    CommandProposalConfirmed {
+        proposal_id: String,
+    },
+    CommandProposalRejected {
+        proposal_id: String,
+    },
+    SettingsUpdated {
+        settings: UiSettings,
+    },
+    NeedsAttentionChanged {
+        items: Vec<String>,
+    },
     TaskCreated {
         task_id: String,
         contract: Box<TaskContract>,

@@ -46,6 +46,7 @@ fn run_task(file: &str) {
     if let Ok(resp) = serde_json::from_str::<Response>(&resp_str) {
         match resp {
             Response::Ack { task_id } => println!("Task created: {}", task_id),
+            Response::Proposal { proposal_id } => println!("Proposal created: {}", proposal_id),
             Response::Error { message } => eprintln!("Error: {}", message),
         }
     } else {
@@ -61,7 +62,10 @@ fn start_daemon_foreground() -> Result<(), Box<dyn std::error::Error>> {
     let registry = Arc::new(Mutex::new(daemon::registry::AgentRegistry::new()));
     let bootstrap_events = {
         let mut reg = registry.lock().unwrap();
-        daemon::server::bootstrap_registry(&mut reg)
+        let mut events = daemon::server::bootstrap_registry(&mut reg);
+        let settings = daemon::settings::load_settings(&std::env::current_dir()?);
+        events.push(Event::SettingsUpdated { settings });
+        events
     };
     {
         let store_lock = store.lock().unwrap();

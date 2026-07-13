@@ -5,16 +5,22 @@ use crossterm::{
 };
 use ratatui::{
     backend::CrosstermBackend,
-    layout::{Constraint, Direction, Layout},
+    layout::{Constraint, Direction, Layout, Rect},
+    style::{Color, Modifier, Style},
+    text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
-    Terminal,
+    Frame, Terminal,
 };
 use std::io::{self, stdout};
 use std::sync::mpsc;
 use std::time::Duration;
 
 use crate::client;
+use crate::ui::format::{
+    self, base_style, panel_block, selected_style, ACCENT, BG, MUTED, PANEL, TEXT,
+};
 use crate::ui::state::TuiState;
+use crate::ui::wizard::ContractWizard;
 use crate::ui::{agents, pty, tasks};
 use core::ipc::{Command, Response};
 
@@ -32,107 +38,6 @@ enum Mode {
     Navigate,
     PtyFocus,
     Wizard,
-}
-
-#[derive(Debug, Clone)]
-struct ContractWizard {
-    fields: Vec<WizardField>,
-    current: usize,
-    status: String,
-}
-
-#[derive(Debug, Clone)]
-struct WizardField {
-    label: &'static str,
-    value: String,
-}
-
-impl ContractWizard {
-    fn new() -> Self {
-        Self {
-            fields: vec![
-                WizardField {
-                    label: "title",
-                    value: "Fix scoped task".to_string(),
-                },
-                WizardField {
-                    label: "department",
-                    value: "engineering".to_string(),
-                },
-                WizardField {
-                    label: "scope",
-                    value: "src/**".to_string(),
-                },
-                WizardField {
-                    label: "allowed_files",
-                    value: "src/**".to_string(),
-                },
-                WizardField {
-                    label: "denied_files",
-                    value: ".env,**/secrets/*".to_string(),
-                },
-                WizardField {
-                    label: "success_criteria",
-                    value: "task completes".to_string(),
-                },
-            ],
-            current: 0,
-            status: "Enter: next field | Ctrl+Enter: dispatch | Esc: cancel".to_string(),
-        }
-    }
-
-    fn push_char(&mut self, ch: char) {
-        self.fields[self.current].value.push(ch);
-    }
-
-    fn backspace(&mut self) {
-        self.fields[self.current].value.pop();
-    }
-
-    fn next(&mut self) {
-        self.current = (self.current + 1).min(self.fields.len() - 1);
-    }
-
-    fn previous(&mut self) {
-        if self.current > 0 {
-            self.current -= 1;
-        }
-    }
-
-    fn yaml(&self) -> String {
-        let title = self.value("title");
-        let department = self.value("department");
-        format!(
-            "task_id: draft\ntitle: {}\ndepartment: {}\nscope:\n{}allowed_files:\n{}denied_files:\n{}success_criteria:\n{}reviewer_required: true\nverification_required: true\nmerge_authority: codex\nenforcement_mode: strict\nunknown_files_policy: needs_review\n",
-            yaml_scalar(title),
-            yaml_scalar(department),
-            yaml_list(self.value("scope")),
-            yaml_list(self.value("allowed_files")),
-            yaml_list(self.value("denied_files")),
-            yaml_list(self.value("success_criteria")),
-        )
-    }
-
-    fn value(&self, label: &str) -> &str {
-        self.fields
-            .iter()
-            .find(|field| field.label == label)
-            .map(|field| field.value.as_str())
-            .unwrap_or("")
-    }
-
-    fn render_text(&self) -> String {
-        let mut lines = vec![
-            "NEW TASK CONTRACT".to_string(),
-            self.status.clone(),
-            String::new(),
-        ];
-        for (index, field) in self.fields.iter().enumerate() {
-            let marker = if index == self.current { ">" } else { " " };
-            lines.push(format!("{marker} {}: {}", field.label, field.value));
-        }
-        lines.join("\n")
-    }
 }
 
 pub fn run_tui() -> Result<(), io::Error> {
@@ -166,43 +71,14 @@ pub fn run_tui() -> Result<(), io::Error> {
     let mut state = TuiState::default();
     let mut mode = Mode::Navigate;
     let mut wizard = ContractWizard::new();
-    let mut status = "n: new task | Enter: PTY focus | q: quit".to_string();
+    let mut status = "ready".to_string();
 
     loop {
         while let Ok(event) = rx.try_recv() {
             state.process_event(event);
         }
 
-        terminal.draw(|f| {
-            let chunks = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints([
-                    Constraint::Percentage(25),
-                    Constraint::Percentage(50),
-                    Constraint::Percentage(25),
-                ])
-                .split(f.size());
-
-            tasks::draw(f, chunks[0], &state);
-            pty::draw(f, chunks[1], &state, mode == Mode::PtyFocus);
-            agents::draw(f, chunks[2], &state);
-
-            if mode == Mode::Wizard {
-                let area = centered_rect(70, 70, f.size());
-                let block = Paragraph::new(wizard.render_text()).block(
-                    Block::default()
-                        .title("Guided contract wizard")
-                        .borders(Borders::ALL),
-                );
-                f.render_widget(block, area);
-            } else {
-                let status_area = Layout::default()
-                    .direction(Direction::Vertical)
-                    .constraints([Constraint::Min(1), Constraint::Length(1)])
-                    .split(f.size())[1];
-                f.render_widget(Paragraph::new(status.as_str()), status_area);
-            }
-        })?;
+        terminal.draw(|f| draw_cockpit(f, mode, &state, &wizard, &status))?;
 
         if event::poll(Duration::from_millis(50))? {
             if let CEvent::Key(key) = event::read()? {
@@ -214,6 +90,296 @@ pub fn run_tui() -> Result<(), io::Error> {
     }
 
     Ok(())
+}
+
+fn draw_cockpit(
+    f: &mut Frame,
+    mode: Mode,
+    state: &TuiState,
+    wizard: &ContractWizard,
+    status: &str,
+) {
+    let frame = f.size();
+    f.render_widget(Block::default().style(base_style()), frame);
+
+    let shell = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(3),
+            Constraint::Min(12),
+            Constraint::Length(2),
+        ])
+        .split(frame);
+
+    draw_header(f, shell[0], mode, state);
+
+    let body = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage(20),
+            Constraint::Percentage(52),
+            Constraint::Percentage(28),
+        ])
+        .split(shell[1]);
+
+    tasks::draw(f, body[0], state);
+    pty::draw(f, body[1], state, mode == Mode::PtyFocus);
+
+    if mode == Mode::Wizard {
+        draw_contract_drawer(f, body[2], wizard);
+    } else {
+        draw_right_rail(f, body[2], state);
+    }
+
+    draw_command_bar(f, shell[2], mode, status);
+}
+
+fn draw_header(f: &mut Frame, area: Rect, mode: Mode, state: &TuiState) {
+    let task_label = state
+        .selected_task_detail()
+        .and_then(|detail| detail.title.as_deref())
+        .unwrap_or("no active task");
+    let mode_label = match mode {
+        Mode::Navigate => "navigate",
+        Mode::PtyFocus => "pty focus",
+        Mode::Wizard => "new contract",
+    };
+    let task_width = area.width.saturating_sub(76) as usize;
+    let line = Line::from(vec![
+        Span::styled(
+            " together ",
+            Style::default()
+                .fg(Color::White)
+                .bg(ACCENT)
+                .add_modifier(Modifier::BOLD),
+        ),
+        Span::styled(" Product", Style::default().fg(TEXT).bg(PANEL)),
+        Span::styled(
+            " branch feat/mvp1-daemon-discovery",
+            Style::default().fg(MUTED).bg(PANEL),
+        ),
+        Span::styled(
+            " daemon local",
+            Style::default().fg(format::READY).bg(PANEL),
+        ),
+        Span::styled(
+            format!(" mode {mode_label}"),
+            Style::default().fg(ACCENT).bg(PANEL),
+        ),
+        Span::styled(
+            format!(" task {}", format::truncate(task_label, task_width)),
+            Style::default().fg(MUTED).bg(PANEL),
+        ),
+    ]);
+
+    f.render_widget(
+        Paragraph::new(line)
+            .block(
+                Block::default()
+                    .borders(Borders::BOTTOM)
+                    .border_style(Style::default().fg(format::BORDER).bg(BG)),
+            )
+            .style(Style::default().bg(PANEL)),
+        area,
+    );
+}
+
+fn draw_right_rail(f: &mut Frame, area: Rect, state: &TuiState) {
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(55), Constraint::Percentage(45)])
+        .split(area);
+    agents::draw(f, chunks[0], state);
+    draw_review_queue(f, chunks[1], state);
+}
+
+fn draw_review_queue(f: &mut Frame, area: Rect, state: &TuiState) {
+    let mut lines = Vec::new();
+    if let Some(detail) = state.selected_task_detail() {
+        let approval = if detail.approval_blocked {
+            Span::styled(
+                "blocked",
+                Style::default()
+                    .fg(format::DANGER)
+                    .bg(PANEL)
+                    .add_modifier(Modifier::BOLD),
+            )
+        } else {
+            Span::styled(
+                "pending",
+                Style::default()
+                    .fg(format::WARN)
+                    .bg(PANEL)
+                    .add_modifier(Modifier::BOLD),
+            )
+        };
+        lines.push(Line::from(vec![
+            Span::styled("approval ", Style::default().fg(MUTED).bg(PANEL)),
+            approval,
+        ]));
+        if let Some(verification) = &detail.verification {
+            lines.push(Line::from(Span::styled(
+                format::truncate(verification, area.width.saturating_sub(3) as usize),
+                Style::default().fg(TEXT).bg(PANEL),
+            )));
+        } else {
+            lines.push(Line::from(Span::styled(
+                "verification waits for task completion",
+                Style::default().fg(MUTED).bg(PANEL),
+            )));
+        }
+        lines.push(Line::from(""));
+        lines.push(Line::from(Span::styled(
+            "timeline",
+            Style::default().fg(MUTED).bg(PANEL),
+        )));
+        for entry in state
+            .timeline_for(&detail.task_id)
+            .iter()
+            .rev()
+            .take(5)
+            .rev()
+        {
+            lines.push(Line::from(Span::styled(
+                format!(
+                    "- {}",
+                    format::truncate(entry, area.width.saturating_sub(4) as usize)
+                ),
+                Style::default().fg(TEXT).bg(PANEL),
+            )));
+        }
+    } else {
+        lines.push(Line::from(Span::styled(
+            "No review item yet.",
+            Style::default().fg(MUTED).bg(PANEL),
+        )));
+        lines.push(Line::from(Span::styled(
+            "Create and run a task to see verification.",
+            Style::default().fg(MUTED).bg(PANEL),
+        )));
+    }
+
+    f.render_widget(
+        Paragraph::new(lines)
+            .block(panel_block("review queue"))
+            .style(Style::default().bg(PANEL)),
+        area,
+    );
+}
+
+fn draw_contract_drawer(f: &mut Frame, area: Rect, wizard: &ContractWizard) {
+    let mut lines = vec![
+        Line::from(Span::styled(
+            "New scoped task",
+            Style::default()
+                .fg(TEXT)
+                .bg(PANEL)
+                .add_modifier(Modifier::BOLD),
+        )),
+        Line::from(Span::styled(
+            wizard.status(),
+            Style::default().fg(MUTED).bg(PANEL),
+        )),
+        Line::from(""),
+    ];
+
+    for (index, field) in wizard.fields().iter().enumerate() {
+        let focused = index == wizard.current();
+        let required = if field.required { " *" } else { "" };
+        let label_style = if focused {
+            selected_style()
+        } else {
+            Style::default().fg(MUTED).bg(PANEL)
+        };
+        let value = if field.value.is_empty() {
+            field.placeholder
+        } else {
+            field.value.as_str()
+        };
+        let value_style = if field.value.is_empty() {
+            Style::default().fg(MUTED).bg(PANEL)
+        } else if focused {
+            Style::default()
+                .fg(ACCENT)
+                .bg(PANEL)
+                .add_modifier(Modifier::BOLD)
+        } else {
+            Style::default().fg(TEXT).bg(PANEL)
+        };
+
+        lines.push(Line::from(Span::styled(
+            format!("{}{}", field.title, required),
+            label_style,
+        )));
+        lines.push(Line::from(Span::styled(
+            format!(
+                "  {}",
+                format::truncate(value, area.width.saturating_sub(5) as usize)
+            ),
+            value_style,
+        )));
+    }
+
+    lines.push(Line::from(""));
+    let errors = wizard.validation_errors();
+    if errors.is_empty() {
+        lines.push(Line::from(Span::styled(
+            "ready to dispatch",
+            Style::default()
+                .fg(format::READY)
+                .bg(PANEL)
+                .add_modifier(Modifier::BOLD),
+        )));
+    } else {
+        lines.push(Line::from(Span::styled(
+            "contract needs attention",
+            Style::default()
+                .fg(format::WARN)
+                .bg(PANEL)
+                .add_modifier(Modifier::BOLD),
+        )));
+        for error in errors.iter().take(3) {
+            lines.push(Line::from(Span::styled(
+                format!("- {error}"),
+                Style::default().fg(format::WARN).bg(PANEL),
+            )));
+        }
+    }
+
+    f.render_widget(
+        Paragraph::new(lines)
+            .block(panel_block("contract drawer"))
+            .style(Style::default().bg(PANEL)),
+        area,
+    );
+}
+
+fn draw_command_bar(f: &mut Frame, area: Rect, mode: Mode, status: &str) {
+    let help = match mode {
+        Mode::Navigate => "n new task | j/k select | Enter focus PTY | q quit",
+        Mode::PtyFocus => "typing sends input | Enter newline | Esc detach",
+        Mode::Wizard => "Tab next | Shift+Tab previous | Ctrl+Enter dispatch | Esc cancel",
+    };
+    let status_width = area.width.saturating_sub(help.len() as u16 + 8) as usize;
+    let line = Line::from(vec![
+        Span::styled(" ", Style::default().bg(PANEL)),
+        Span::styled(help, Style::default().fg(TEXT).bg(PANEL)),
+        Span::styled("  |  ", Style::default().fg(MUTED).bg(PANEL)),
+        Span::styled(
+            format::truncate(status, status_width),
+            Style::default().fg(MUTED).bg(PANEL),
+        ),
+    ]);
+    f.render_widget(
+        Paragraph::new(line)
+            .block(
+                Block::default()
+                    .borders(Borders::TOP)
+                    .border_style(Style::default().fg(format::BORDER).bg(PANEL)),
+            )
+            .style(Style::default().bg(PANEL)),
+        area,
+    );
 }
 
 fn handle_key(
@@ -229,19 +395,20 @@ fn handle_key(
             KeyCode::Char('n') => {
                 *wizard = ContractWizard::new();
                 *mode = Mode::Wizard;
+                *status = "editing task contract".to_string();
             }
             KeyCode::Down | KeyCode::Char('j') => state.select_next_task(),
             KeyCode::Up | KeyCode::Char('k') => state.select_previous_task(),
             KeyCode::Enter if state.selected_task_id.is_some() => {
                 *mode = Mode::PtyFocus;
-                *status = "PTY focus: Esc to detach input".to_string();
+                *status = "PTY focus active".to_string();
             }
             _ => {}
         },
         Mode::PtyFocus => match key.code {
             KeyCode::Esc => {
                 *mode = Mode::Navigate;
-                *status = "n: new task | Enter: PTY focus | q: quit".to_string();
+                *status = "detached from PTY input".to_string();
             }
             KeyCode::Enter => send_selected_input(state, "\r\n")?,
             KeyCode::Backspace => send_selected_input(state, "\u{8}")?,
@@ -249,15 +416,25 @@ fn handle_key(
             _ => {}
         },
         Mode::Wizard => match key.code {
-            KeyCode::Esc => *mode = Mode::Navigate,
-            KeyCode::Tab | KeyCode::Down => wizard.next(),
+            KeyCode::Esc => {
+                *mode = Mode::Navigate;
+                *status = "contract cancelled".to_string();
+            }
+            KeyCode::Tab | KeyCode::Down | KeyCode::Enter
+                if !key.modifiers.contains(KeyModifiers::CONTROL) =>
+            {
+                wizard.next()
+            }
             KeyCode::BackTab | KeyCode::Up => wizard.previous(),
             KeyCode::Backspace => wizard.backspace(),
             KeyCode::Enter if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                dispatch_contract(wizard, status)?;
-                *mode = Mode::Navigate;
+                if wizard.is_valid() {
+                    dispatch_contract(wizard, status)?;
+                    *mode = Mode::Navigate;
+                } else {
+                    *status = wizard.validation_errors().join("; ");
+                }
             }
-            KeyCode::Enter => wizard.next(),
             KeyCode::Char(ch) => wizard.push_char(ch),
             _ => {}
         },
@@ -291,41 +468,4 @@ fn dispatch_contract(wizard: &ContractWizard, status: &mut String) -> Result<(),
         }
     }
     Ok(())
-}
-
-fn yaml_scalar(value: &str) -> String {
-    format!("{:?}", value)
-}
-
-fn yaml_list(value: &str) -> String {
-    value
-        .split(',')
-        .map(str::trim)
-        .filter(|item| !item.is_empty())
-        .map(|item| format!("  - {:?}\n", item))
-        .collect::<String>()
-}
-
-fn centered_rect(
-    percent_x: u16,
-    percent_y: u16,
-    area: ratatui::layout::Rect,
-) -> ratatui::layout::Rect {
-    let popup_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Percentage((100 - percent_y) / 2),
-            Constraint::Percentage(percent_y),
-            Constraint::Percentage((100 - percent_y) / 2),
-        ])
-        .split(area);
-
-    Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage((100 - percent_x) / 2),
-            Constraint::Percentage(percent_x),
-            Constraint::Percentage((100 - percent_x) / 2),
-        ])
-        .split(popup_layout[1])[1]
 }

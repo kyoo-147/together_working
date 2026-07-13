@@ -6,8 +6,9 @@ use clap::{Parser, Subcommand};
 use core::events::Event;
 use core::ipc::{Command, Response};
 use std::io::Write;
+use std::process::Stdio;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 #[derive(Parser)]
 #[command(name = "together", about = "AI Department Orchestrator")]
@@ -82,15 +83,24 @@ fn ensure_daemon() -> Result<(), std::io::Error> {
     }
 
     let exe = std::env::current_exe()?;
-    std::process::Command::new(exe)
+    let mut child = std::process::Command::new(exe)
         .arg("daemon")
         .current_dir(std::env::current_dir()?)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
         .spawn()?;
 
-    for _ in 0..20 {
+    let deadline = Instant::now() + Duration::from_secs(15);
+    while Instant::now() < deadline {
         std::thread::sleep(Duration::from_millis(100));
         if client::subscribe(client::DEFAULT_SOCKET_NAME).is_ok() {
             return Ok(());
+        }
+        if let Some(status) = child.try_wait()? {
+            return Err(std::io::Error::other(format!(
+                "daemon exited before becoming ready: {status}"
+            )));
         }
     }
 

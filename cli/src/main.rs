@@ -10,6 +10,8 @@ use std::process::Stdio;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
+const DAEMON_READY_TIMEOUT: Duration = Duration::from_secs(45);
+
 #[derive(Parser)]
 #[command(name = "together", about = "AI Department Orchestrator")]
 struct Cli {
@@ -91,7 +93,7 @@ fn ensure_daemon() -> Result<(), std::io::Error> {
         .stderr(Stdio::null())
         .spawn()?;
 
-    let deadline = Instant::now() + Duration::from_secs(15);
+    let deadline = Instant::now() + DAEMON_READY_TIMEOUT;
     while Instant::now() < deadline {
         std::thread::sleep(Duration::from_millis(100));
         if client::subscribe(client::DEFAULT_SOCKET_NAME).is_ok() {
@@ -106,7 +108,10 @@ fn ensure_daemon() -> Result<(), std::io::Error> {
 
     Err(std::io::Error::new(
         std::io::ErrorKind::TimedOut,
-        "daemon did not become ready",
+        format!(
+            "daemon did not become ready within {}s",
+            DAEMON_READY_TIMEOUT.as_secs()
+        ),
     ))
 }
 

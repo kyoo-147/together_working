@@ -178,8 +178,10 @@ dependencies = [
  "clap",
  "core",
  "crossterm",
+ "daemon",
  "interprocess",
  "ratatui",
+ "rusqlite",
  "serde_json",
 ]
 

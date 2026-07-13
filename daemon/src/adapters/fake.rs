@@ -1,6 +1,6 @@
-use std::process::Command;
-use core::contracts::TaskContract;
 use super::AgentAdapter;
+use core::contracts::TaskContract;
+use std::process::Command;
 
 pub struct FakeAdapter;
 
@@ -9,10 +9,10 @@ impl AgentAdapter for FakeAdapter {
         #[cfg(target_os = "windows")]
         {
             let mut cmd = Command::new("cmd");
-            cmd.args(&["/c", "echo", "Doing fake work..."]);
+            cmd.args(["/c", "echo", "Doing fake work..."]);
             cmd
         }
-        
+
         #[cfg(not(target_os = "windows"))]
         {
             let mut cmd = Command::new("sh");
@@ -28,14 +28,10 @@ mod tests {
 
     #[test]
     fn test_build_command_returns_fake_work_command() {
-        let contract = TaskContract {
-            task_id: "test-task".to_string(),
-            department: None,
-            agent: None,
-        };
+        let contract = TaskContract::minimal("test-task");
         let adapter = FakeAdapter;
         let cmd = adapter.build_command(&contract);
-        
+
         #[cfg(target_os = "windows")]
         {
             assert_eq!(cmd.get_program(), "cmd");

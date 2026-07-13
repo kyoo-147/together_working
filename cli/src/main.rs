@@ -1,11 +1,13 @@
-mod tui;
 mod client;
+mod tui;
 pub mod ui;
 
 use clap::{Parser, Subcommand};
-use core::ipc::{Command, Response};
 use core::events::Event;
+use core::ipc::{Command, Response};
 use std::io::Write;
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 #[derive(Parser)]
 #[command(name = "together", about = "AI Department Orchestrator")]
@@ -17,12 +19,8 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Daemon,
-    Run {
-        file: String,
-    },
-    Attach {
-        task_id: String,
-    },
+    Run { file: String },
+    Attach { task_id: String },
 }
 
 fn run_task(file: &str) {
@@ -52,11 +50,64 @@ fn run_task(file: &str) {
     }
 }
 
+fn start_daemon_foreground() -> Result<(), Box<dyn std::error::Error>> {
+    std::fs::create_dir_all(".together")?;
+    let store = Arc::new(Mutex::new(daemon::store::EventStore::new(
+        ".together/events.db",
+    )?));
+    let registry = Arc::new(Mutex::new(daemon::registry::AgentRegistry::new()));
+    let bootstrap_events = {
+        let mut reg = registry.lock().unwrap();
+        daemon::server::bootstrap_registry(&mut reg)
+    };
+    {
+        let store_lock = store.lock().unwrap();
+        for event in &bootstrap_events {
+            let _ = store_lock.append(event);
+        }
+    }
+    daemon::server::start_server(client::DEFAULT_SOCKET_NAME, store, registry)?;
+    println!(
+        "Together daemon listening on {}",
+        client::DEFAULT_SOCKET_NAME
+    );
+    loop {
+        std::thread::sleep(Duration::from_secs(3600));
+    }
+}
+
+fn ensure_daemon() -> Result<(), std::io::Error> {
+    if client::subscribe(client::DEFAULT_SOCKET_NAME).is_ok() {
+        return Ok(());
+    }
+
+    let exe = std::env::current_exe()?;
+    std::process::Command::new(exe)
+        .arg("daemon")
+        .current_dir(std::env::current_dir()?)
+        .spawn()?;
+
+    for _ in 0..20 {
+        std::thread::sleep(Duration::from_millis(100));
+        if client::subscribe(client::DEFAULT_SOCKET_NAME).is_ok() {
+            return Ok(());
+        }
+    }
+
+    Err(std::io::Error::new(
+        std::io::ErrorKind::TimedOut,
+        "daemon did not become ready",
+    ))
+}
+
 fn main() {
     let cli = Cli::parse();
     match &cli.command {
         Some(Commands::Daemon) => {
-            println!("Starting daemon...");
+            if let Err(err) = start_daemon_foreground() {
+                eprintln!("Failed to start daemon: {}", err);
+                std::process::exit(1);
+            }
         }
         Some(Commands::Run { file }) => {
             run_task(file);
@@ -66,11 +117,17 @@ fn main() {
                 Ok(rx) => {
                     for event_res in rx {
                         match event_res {
-                            Ok(Event::PtyOutput { task_id: tid, chunk }) if tid == *task_id => {
+                            Ok(Event::PtyOutput {
+                                task_id: tid,
+                                chunk,
+                            }) if tid == *task_id => {
                                 print!("{chunk}");
                                 let _ = std::io::stdout().flush();
                             }
-                            Ok(Event::TaskCompleted { task_id: tid, success }) if tid == *task_id => {
+                            Ok(Event::TaskCompleted {
+                                task_id: tid,
+                                success,
+                            }) if tid == *task_id => {
                                 println!("\n[Task {} completed with success={}]", tid, success);
                                 break;
                             }
@@ -88,6 +145,10 @@ fn main() {
             }
         }
         None => {
+            if let Err(err) = ensure_daemon() {
+                eprintln!("Failed to auto-start daemon: {}", err);
+                std::process::exit(1);
+            }
             if let Err(err) = tui::run_tui() {
                 eprintln!("Application error: {}", err);
                 std::process::exit(1);

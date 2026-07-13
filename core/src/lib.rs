@@ -1,6 +1,6 @@
 // Core library entry point
-pub mod models;
+pub mod contracts;
 pub mod discovery;
 pub mod events;
-pub mod contracts;
 pub mod ipc;
+pub mod models;

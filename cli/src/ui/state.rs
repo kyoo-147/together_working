@@ -12,6 +12,28 @@ pub enum TaskStatus {
     Completed(bool),
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum TaskView {
+    #[default]
+    Monitor,
+    Diff,
+    Review,
+    Verify,
+    Logs,
+}
+
+impl TaskView {
+    pub fn title(&self) -> &'static str {
+        match self {
+            TaskView::Monitor => "Live Work Feed",
+            TaskView::Diff => "Diff",
+            TaskView::Review => "Review",
+            TaskView::Verify => "Verify",
+            TaskView::Logs => "Logs",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TaskDetail {
     pub task_id: String,
@@ -21,6 +43,7 @@ pub struct TaskDetail {
     pub assigned_agent: Option<String>,
     pub route: Option<String>,
     pub verification: Option<String>,
+    pub review_state: Option<String>,
     pub approval_blocked: bool,
 }
 
@@ -37,6 +60,7 @@ pub struct TuiState {
     pub latest_proposal_id: Option<String>,
     pub needs_attention: Vec<String>,
     pub settings: UiSettings,
+    pub current_view: TaskView,
     pub selected_task_id: Option<String>,
 }
 
@@ -66,6 +90,40 @@ impl TuiState {
             }
             Event::NeedsAttentionChanged { items } => {
                 self.needs_attention = items;
+            }
+            Event::ReviewRequested { task_id } => {
+                self.detail_mut(&task_id).review_state = Some("pending_review".to_string());
+                self.push_attention(format!("task {task_id} completed and awaiting review"));
+                self.timeline(&task_id, "review requested");
+            }
+            Event::ReviewCompleted {
+                task_id,
+                status,
+                summary,
+            } => {
+                self.detail_mut(&task_id).review_state = Some(status.label().to_string());
+                if status == core::review::ReviewStatus::ChangesRequested {
+                    self.push_attention(format!("changes requested for {task_id}: {summary}"));
+                }
+                self.timeline(&task_id, &format!("review {}: {summary}", status.label()));
+            }
+            Event::ApprovalBlocked { task_id, reason } => {
+                let detail = self.detail_mut(&task_id);
+                detail.approval_blocked = true;
+                detail.review_state = Some("blocked_by_verification".to_string());
+                self.push_attention(format!("approval blocked for {task_id}: {reason}"));
+                self.timeline(&task_id, &format!("approval blocked: {reason}"));
+            }
+            Event::TaskApproved { task_id } => {
+                let detail = self.detail_mut(&task_id);
+                detail.approval_blocked = false;
+                detail.review_state = Some("approved".to_string());
+                self.timeline(&task_id, "approved");
+            }
+            Event::TaskRejected { task_id, reason } => {
+                self.detail_mut(&task_id).review_state = Some("rejected".to_string());
+                self.push_attention(format!("task {task_id} rejected: {reason}"));
+                self.timeline(&task_id, &format!("rejected: {reason}"));
             }
             Event::AgentStatusChanged { agent_name, status } => {
                 if let AgentStatus::Degraded { reason } = &status {
@@ -224,6 +282,10 @@ impl TuiState {
             .filter(|proposal| proposal.status == ProposalStatus::Pending)
     }
 
+    pub fn set_view(&mut self, view: TaskView) {
+        self.current_view = view;
+    }
+
     fn upsert_contract_detail(&mut self, task_id: &str, contract: &TaskContract) {
         self.task_details.insert(
             task_id.to_string(),
@@ -239,6 +301,7 @@ impl TuiState {
                 assigned_agent: contract.agent.clone(),
                 route: None,
                 verification: None,
+                review_state: None,
                 approval_blocked: false,
             },
         );
@@ -259,6 +322,15 @@ impl TuiState {
         {
             self.needs_attention.push(item);
         }
+    }
+
+    fn detail_mut(&mut self, task_id: &str) -> &mut TaskDetail {
+        self.task_details
+            .entry(task_id.to_string())
+            .or_insert_with(|| TaskDetail {
+                task_id: task_id.to_string(),
+                ..TaskDetail::default()
+            })
     }
 }
 
@@ -454,5 +526,38 @@ mod tests {
 
         assert_eq!(state.settings.theme_preset, "Ocean Blue");
         assert_eq!(state.needs_attention.len(), 1);
+    }
+
+    #[test]
+    fn test_review_approval_events_update_task_state_and_attention() {
+        let mut state = TuiState::default();
+
+        state.process_event(Event::ReviewRequested {
+            task_id: "t1".into(),
+        });
+        state.process_event(Event::ApprovalBlocked {
+            task_id: "t1".into(),
+            reason: "verification failed".into(),
+        });
+        state.process_event(Event::ReviewCompleted {
+            task_id: "t1".into(),
+            status: core::review::ReviewStatus::ChangesRequested,
+            summary: "add tests".into(),
+        });
+
+        let detail = state.task_detail("t1").unwrap();
+        assert_eq!(detail.review_state.as_deref(), Some("changes_requested"));
+        assert!(detail.approval_blocked);
+        assert!(state
+            .needs_attention
+            .iter()
+            .any(|item| item.contains("verification failed")));
+
+        state.process_event(Event::TaskApproved {
+            task_id: "t1".into(),
+        });
+        let detail = state.task_detail("t1").unwrap();
+        assert_eq!(detail.review_state.as_deref(), Some("approved"));
+        assert!(!detail.approval_blocked);
     }
 }

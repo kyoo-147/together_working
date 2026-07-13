@@ -1,5 +1,6 @@
 use crate::chat::{ChatSource, CommandProposal};
 use crate::contracts::TaskContract;
+use crate::review::ReviewStatus;
 use crate::settings::UiSettings;
 use serde::{Deserialize, Serialize};
 
@@ -81,6 +82,25 @@ pub enum Event {
         success: bool,
         summary: String,
     },
+    ReviewRequested {
+        task_id: String,
+    },
+    ReviewCompleted {
+        task_id: String,
+        status: ReviewStatus,
+        summary: String,
+    },
+    ApprovalBlocked {
+        task_id: String,
+        reason: String,
+    },
+    TaskApproved {
+        task_id: String,
+    },
+    TaskRejected {
+        task_id: String,
+        reason: String,
+    },
 }
 
 #[cfg(test)]
@@ -110,5 +130,36 @@ mod tests {
         };
         let json = serde_json::to_string(&event).unwrap();
         assert!(json.contains("TaskCreated"));
+    }
+
+    #[test]
+    fn serializes_review_and_approval_events() {
+        let events = [
+            Event::ReviewRequested {
+                task_id: "t1".to_string(),
+            },
+            Event::ReviewCompleted {
+                task_id: "t1".to_string(),
+                status: crate::review::ReviewStatus::ChangesRequested,
+                summary: "needs tests".to_string(),
+            },
+            Event::ApprovalBlocked {
+                task_id: "t1".to_string(),
+                reason: "verification failed".to_string(),
+            },
+            Event::TaskApproved {
+                task_id: "t1".to_string(),
+            },
+            Event::TaskRejected {
+                task_id: "t1".to_string(),
+                reason: "out of scope".to_string(),
+            },
+        ];
+
+        for event in events {
+            let json = serde_json::to_string(&event).unwrap();
+            let parsed: Event = serde_json::from_str(&json).unwrap();
+            assert_eq!(parsed, event);
+        }
     }
 }

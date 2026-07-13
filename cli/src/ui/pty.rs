@@ -9,12 +9,14 @@ use ratatui::{
 };
 
 pub fn draw(f: &mut Frame, area: Rect, state: &TuiState, focused: bool) {
+    let header_height = if area.height < 16 { 3 } else { 4 };
+    let input_height = if area.height < 14 { 2 } else { 3 };
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(4),
-            Constraint::Min(8),
-            Constraint::Length(3),
+            Constraint::Length(header_height),
+            Constraint::Min(4),
+            Constraint::Length(input_height),
         ])
         .split(area);
 
@@ -51,6 +53,9 @@ fn draw_task_header(f: &mut Frame, area: Rect, state: &TuiState) {
                 Style::default().fg(TEXT).bg(PANEL),
             ),
         ]));
+        if area.height < 4 {
+            lines.truncate(1);
+        }
     } else {
         lines.push(Line::from(vec![Span::styled(
             "No task selected",
@@ -63,6 +68,9 @@ fn draw_task_header(f: &mut Frame, area: Rect, state: &TuiState) {
             "Press n to create a scoped contract",
             Style::default().fg(MUTED).bg(PANEL),
         )]));
+        if area.height < 4 {
+            lines.truncate(1);
+        }
     }
     f.render_widget(
         Paragraph::new(lines)
@@ -110,7 +118,7 @@ fn draw_output(f: &mut Frame, area: Rect, state: &TuiState, selected: Option<&st
         }
         lines
     } else {
-        vec![
+        let mut empty = vec![
             Line::from(Span::styled(
                 "Create a task to start a real PTY worker.",
                 Style::default()
@@ -126,7 +134,9 @@ fn draw_output(f: &mut Frame, area: Rect, state: &TuiState, selected: Option<&st
                 "Codex is preferred; degraded agents fall back to the next healthy worker.",
                 Style::default().fg(MUTED).bg(PANEL),
             )),
-        ]
+        ];
+        empty.truncate(visible_height.max(1));
+        empty
     };
 
     f.render_widget(
@@ -145,6 +155,7 @@ fn draw_input_strip(f: &mut Frame, area: Rect, focused: bool, has_task: bool) {
     } else {
         "n creates a task - q quits"
     };
+    let status = format::truncate(status, area.width.saturating_sub(2) as usize);
     let style = if focused {
         Style::default().fg(Color::White).bg(ACCENT)
     } else {

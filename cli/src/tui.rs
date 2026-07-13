@@ -19,6 +19,7 @@ use crate::client;
 use crate::ui::format::{
     self, base_style, panel_block, selected_style, ACCENT, BG, MUTED, PANEL, TEXT,
 };
+use crate::ui::layout::{cockpit_areas, ViewportClass};
 use crate::ui::state::TuiState;
 use crate::ui::wizard::ContractWizard;
 use crate::ui::{agents, pty, tasks};
@@ -101,40 +102,32 @@ fn draw_cockpit(
 ) {
     let frame = f.size();
     f.render_widget(Block::default().style(base_style()), frame);
+    let areas = cockpit_areas(frame, mode == Mode::Wizard);
 
-    let shell = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length(3),
-            Constraint::Min(12),
-            Constraint::Length(2),
-        ])
-        .split(frame);
+    draw_header(f, areas.header, areas.viewport, mode, state);
 
-    draw_header(f, shell[0], mode, state);
-
-    let body = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage(20),
-            Constraint::Percentage(52),
-            Constraint::Percentage(28),
-        ])
-        .split(shell[1]);
-
-    tasks::draw(f, body[0], state);
-    pty::draw(f, body[1], state, mode == Mode::PtyFocus);
-
-    if mode == Mode::Wizard {
-        draw_contract_drawer(f, body[2], wizard);
-    } else {
-        draw_right_rail(f, body[2], state);
+    if let Some(left) = areas.left {
+        tasks::draw(f, left, state);
     }
 
-    draw_command_bar(f, shell[2], mode, status);
+    if mode == Mode::Wizard && areas.right.is_none() {
+        draw_contract_drawer(f, areas.center, wizard);
+    } else {
+        pty::draw(f, areas.center, state, mode == Mode::PtyFocus);
+    }
+
+    if let Some(right) = areas.right {
+        if mode == Mode::Wizard {
+            draw_contract_drawer(f, right, wizard);
+        } else {
+            draw_right_rail(f, right, state);
+        }
+    }
+
+    draw_command_bar(f, areas.command, areas.viewport, mode, status);
 }
 
-fn draw_header(f: &mut Frame, area: Rect, mode: Mode, state: &TuiState) {
+fn draw_header(f: &mut Frame, area: Rect, viewport: ViewportClass, mode: Mode, state: &TuiState) {
     let task_label = state
         .selected_task_detail()
         .and_then(|detail| detail.title.as_deref())
@@ -144,8 +137,17 @@ fn draw_header(f: &mut Frame, area: Rect, mode: Mode, state: &TuiState) {
         Mode::PtyFocus => "pty focus",
         Mode::Wizard => "new contract",
     };
-    let task_width = area.width.saturating_sub(76) as usize;
-    let line = Line::from(vec![
+    let branch = match viewport {
+        ViewportClass::Compact => "",
+        ViewportClass::Medium => " branch feat/mvp1",
+        ViewportClass::Wide => " branch feat/mvp1-daemon-discovery",
+    };
+    let task_width = area.width.saturating_sub(match viewport {
+        ViewportClass::Compact => 34,
+        ViewportClass::Medium => 55,
+        ViewportClass::Wide => 76,
+    }) as usize;
+    let mut spans = vec![
         Span::styled(
             " together ",
             Style::default()
@@ -154,14 +156,17 @@ fn draw_header(f: &mut Frame, area: Rect, mode: Mode, state: &TuiState) {
                 .add_modifier(Modifier::BOLD),
         ),
         Span::styled(" Product", Style::default().fg(TEXT).bg(PANEL)),
-        Span::styled(
-            " branch feat/mvp1-daemon-discovery",
-            Style::default().fg(MUTED).bg(PANEL),
-        ),
-        Span::styled(
+    ];
+    if !branch.is_empty() {
+        spans.push(Span::styled(branch, Style::default().fg(MUTED).bg(PANEL)));
+    }
+    if viewport != ViewportClass::Compact {
+        spans.push(Span::styled(
             " daemon local",
             Style::default().fg(format::READY).bg(PANEL),
-        ),
+        ));
+    }
+    spans.extend([
         Span::styled(
             format!(" mode {mode_label}"),
             Style::default().fg(ACCENT).bg(PANEL),
@@ -171,6 +176,7 @@ fn draw_header(f: &mut Frame, area: Rect, mode: Mode, state: &TuiState) {
             Style::default().fg(MUTED).bg(PANEL),
         ),
     ]);
+    let line = Line::from(spans);
 
     f.render_widget(
         Paragraph::new(line)
@@ -354,11 +360,14 @@ fn draw_contract_drawer(f: &mut Frame, area: Rect, wizard: &ContractWizard) {
     );
 }
 
-fn draw_command_bar(f: &mut Frame, area: Rect, mode: Mode, status: &str) {
-    let help = match mode {
-        Mode::Navigate => "n new task | j/k select | Enter focus PTY | q quit",
-        Mode::PtyFocus => "typing sends input | Enter newline | Esc detach",
-        Mode::Wizard => "Tab next | Shift+Tab previous | Ctrl+Enter dispatch | Esc cancel",
+fn draw_command_bar(f: &mut Frame, area: Rect, viewport: ViewportClass, mode: Mode, status: &str) {
+    let help = match (viewport, mode) {
+        (ViewportClass::Compact, Mode::Navigate) => "n new | Enter focus | q quit",
+        (ViewportClass::Compact, Mode::PtyFocus) => "type input | Esc detach",
+        (ViewportClass::Compact, Mode::Wizard) => "Tab next | Ctrl+Enter send | Esc cancel",
+        (_, Mode::Navigate) => "n new task | j/k select | Enter focus PTY | q quit",
+        (_, Mode::PtyFocus) => "typing sends input | Enter newline | Esc detach",
+        (_, Mode::Wizard) => "Tab next | Shift+Tab previous | Ctrl+Enter dispatch | Esc cancel",
     };
     let status_width = area.width.saturating_sub(help.len() as u16 + 8) as usize;
     let line = Line::from(vec![

@@ -21,20 +21,26 @@ pub fn draw(f: &mut Frame, area: Rect, state: &TuiState) {
                 .bg(PANEL)
                 .add_modifier(Modifier::BOLD),
         )])),
-        ListItem::new(Line::from("")),
-        ListItem::new(Line::from(vec![Span::styled(
-            "departments",
-            Style::default().fg(MUTED).bg(PANEL),
-        )])),
-        ListItem::new(Line::from("  engineering")),
-        ListItem::new(Line::from("  integration")),
-        ListItem::new(Line::from("  review")),
-        ListItem::new(Line::from("")),
-        ListItem::new(Line::from(vec![Span::styled(
-            "tasks",
-            Style::default().fg(MUTED).bg(PANEL),
-        )])),
     ];
+    if area.height >= 18 {
+        items.extend([
+            ListItem::new(Line::from("")),
+            ListItem::new(Line::from(vec![Span::styled(
+                "departments",
+                Style::default().fg(MUTED).bg(PANEL),
+            )])),
+            ListItem::new(Line::from("  engineering")),
+            ListItem::new(Line::from("  integration")),
+            ListItem::new(Line::from("  review")),
+            ListItem::new(Line::from("")),
+        ]);
+    } else {
+        items.push(ListItem::new(Line::from("")));
+    }
+    items.push(ListItem::new(Line::from(vec![Span::styled(
+        "tasks",
+        Style::default().fg(MUTED).bg(PANEL),
+    )])));
 
     let mut task_ids = state.tasks.keys().cloned().collect::<Vec<_>>();
     task_ids.sort();

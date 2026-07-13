@@ -17,6 +17,7 @@ use core::chat::{CommandProposal, ProposalAction, ProposalStatus};
 use core::contracts::TaskContract;
 use core::events::{AgentStatus, Event};
 use core::ipc::{Command, Response};
+use core::review::ReviewStatus;
 
 pub fn start_server(
     socket_name: &str,
@@ -130,10 +131,14 @@ pub fn start_server(
                                             subscribers.clone(),
                                             pty_inputs.clone(),
                                         ),
+                                        ProposalAction::ApproveTask { task_id } => approve_task(
+                                            &task_id,
+                                            store.clone(),
+                                            subscribers.clone(),
+                                        ),
                                         ProposalAction::Status
                                         | ProposalAction::VerifyTask { .. }
-                                        | ProposalAction::RerouteTask { .. }
-                                        | ProposalAction::ApproveTask { .. } => Response::Ack {
+                                        | ProposalAction::RerouteTask { .. } => Response::Ack {
                                             task_id: proposal_id,
                                         },
                                     };
@@ -189,6 +194,51 @@ pub fn start_server(
                                         },
                                     ),
                                 }
+                            }
+                            Command::GetSettings => {
+                                let root = std::env::current_dir().unwrap_or_else(|_| ".".into());
+                                let settings = crate::settings::load_settings(&root);
+                                write_response(&mut conn, Response::Settings { settings });
+                            }
+                            Command::GetStatus => {
+                                write_response(
+                                    &mut conn,
+                                    Response::Status {
+                                        json: status_json(&store),
+                                    },
+                                );
+                            }
+                            Command::RequestReview { task_id } => {
+                                let event = Event::ReviewRequested {
+                                    task_id: task_id.clone(),
+                                };
+                                emit_event(&store, &subscribers, &event);
+                                write_response(&mut conn, Response::Ack { task_id });
+                            }
+                            Command::ApproveTask { task_id } => {
+                                let response =
+                                    approve_task(&task_id, store.clone(), subscribers.clone());
+                                write_response(&mut conn, response);
+                            }
+                            Command::RejectTask { task_id, reason } => {
+                                let event = Event::TaskRejected {
+                                    task_id: task_id.clone(),
+                                    reason,
+                                };
+                                emit_event(&store, &subscribers, &event);
+                                write_response(&mut conn, Response::Ack { task_id });
+                            }
+                            Command::RequestChanges {
+                                task_id,
+                                instructions,
+                            } => {
+                                let event = Event::ReviewCompleted {
+                                    task_id: task_id.clone(),
+                                    status: ReviewStatus::ChangesRequested,
+                                    summary: instructions,
+                                };
+                                emit_event(&store, &subscribers, &event);
+                                write_response(&mut conn, Response::Ack { task_id });
                             }
                             Command::Sub => {
                                 let (tx, rx) = channel::<Event>();
@@ -316,6 +366,87 @@ fn write_response<W: Write>(writer: &mut W, response: Response) {
     if let Err(e) = writer.write_all(resp_str.as_bytes()) {
         eprintln!("Failed to write response: {}", e);
     }
+}
+
+fn approve_task(
+    task_id: &str,
+    store: Arc<Mutex<EventStore>>,
+    subscribers: Arc<Mutex<Vec<Sender<Event>>>>,
+) -> Response {
+    let events = store.lock().unwrap().get_all().unwrap_or_default();
+    let completed = events.iter().rev().find_map(|event| match event {
+        Event::TaskCompleted {
+            task_id: id,
+            success,
+        } if id == task_id => Some(*success),
+        _ => None,
+    });
+    let verification = events.iter().rev().find_map(|event| match event {
+        Event::VerificationCompleted {
+            task_id: id,
+            success,
+            summary,
+        } if id == task_id => Some((*success, summary.clone())),
+        _ => None,
+    });
+
+    let block_reason = match (completed, verification) {
+        (Some(true), Some((true, _))) => None,
+        (None, _) => Some("task not completed".to_string()),
+        (Some(false), _) => Some("task completed with failure".to_string()),
+        (Some(true), None) => Some("verification missing".to_string()),
+        (Some(true), Some((false, summary))) => Some(format!("verification failed: {summary}")),
+    };
+
+    if let Some(reason) = block_reason {
+        let event = Event::ApprovalBlocked {
+            task_id: task_id.to_string(),
+            reason: reason.clone(),
+        };
+        emit_event(&store, &subscribers, &event);
+        Response::Error { message: reason }
+    } else {
+        let review = Event::ReviewCompleted {
+            task_id: task_id.to_string(),
+            status: ReviewStatus::Approved,
+            summary: "approved".to_string(),
+        };
+        emit_event(&store, &subscribers, &review);
+        let event = Event::TaskApproved {
+            task_id: task_id.to_string(),
+        };
+        emit_event(&store, &subscribers, &event);
+        Response::Ack {
+            task_id: task_id.to_string(),
+        }
+    }
+}
+
+fn status_json(store: &Arc<Mutex<EventStore>>) -> String {
+    let events = store.lock().unwrap().get_all().unwrap_or_default();
+    let task_count = events
+        .iter()
+        .filter(|event| matches!(event, Event::TaskCreated { .. }))
+        .count();
+    let proposal_count = events
+        .iter()
+        .filter(|event| matches!(event, Event::CommandProposalCreated { .. }))
+        .count();
+    let attention_count = events
+        .iter()
+        .rev()
+        .find_map(|event| match event {
+            Event::NeedsAttentionChanged { items } => Some(items.len()),
+            _ => None,
+        })
+        .unwrap_or(0);
+    serde_json::json!({
+        "daemon": "local",
+        "tasks": task_count,
+        "proposals": proposal_count,
+        "needs_attention": attention_count
+    })
+    .to_string()
 }
 
 pub fn bootstrap_registry(registry: &mut AgentRegistry) -> Vec<Event> {
@@ -457,5 +588,51 @@ enforcement_mode: strict
         assert!(!events
             .iter()
             .any(|event| matches!(event, Event::TaskCreated { .. })));
+    }
+
+    #[test]
+    fn approval_is_blocked_until_task_completed_and_verification_passed() {
+        let store = Arc::new(Mutex::new(EventStore::in_memory().unwrap()));
+        let subscribers: Arc<Mutex<Vec<Sender<Event>>>> = Arc::new(Mutex::new(Vec::new()));
+
+        let response = approve_task("t1", store.clone(), subscribers.clone());
+
+        assert!(matches!(response, Response::Error { .. }));
+        let events = store.lock().unwrap().get_all().unwrap();
+        assert!(events.iter().any(|event| {
+            matches!(
+                event,
+                Event::ApprovalBlocked {
+                    task_id,
+                    reason
+                } if task_id == "t1" && reason.contains("not completed")
+            )
+        }));
+
+        emit_event(
+            &store,
+            &subscribers,
+            &Event::TaskCompleted {
+                task_id: "t1".to_string(),
+                success: true,
+            },
+        );
+        emit_event(
+            &store,
+            &subscribers,
+            &Event::VerificationCompleted {
+                task_id: "t1".to_string(),
+                success: true,
+                summary: "scope clean".to_string(),
+            },
+        );
+
+        let response = approve_task("t1", store.clone(), subscribers.clone());
+
+        assert!(matches!(response, Response::Ack { .. }));
+        let events = store.lock().unwrap().get_all().unwrap();
+        assert!(events
+            .iter()
+            .any(|event| matches!(event, Event::TaskApproved { task_id } if task_id == "t1")));
     }
 }

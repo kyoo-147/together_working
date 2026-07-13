@@ -5,4 +5,5 @@ pub mod discovery;
 pub mod events;
 pub mod ipc;
 pub mod models;
+pub mod review;
 pub mod settings;

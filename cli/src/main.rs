@@ -2,9 +2,11 @@ mod client;
 mod tui;
 pub mod ui;
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
+use core::chat::ChatSource;
 use core::events::Event;
 use core::ipc::{Command, Response};
+use core::settings::UiSettings;
 use std::io::Write;
 use std::process::Stdio;
 use std::sync::{Arc, Mutex};
@@ -22,8 +24,86 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Daemon,
-    Run { file: String },
-    Attach { task_id: String },
+    Run {
+        file: String,
+    },
+    Attach {
+        task_id: String,
+    },
+    Chat {
+        #[arg(long, value_enum, default_value_t = SourceArg::TogetherChat)]
+        source: SourceArg,
+        text: String,
+    },
+    Proposal {
+        #[command(subcommand)]
+        command: ProposalCommand,
+    },
+    Status {
+        #[arg(long)]
+        json: bool,
+    },
+    Settings {
+        #[command(subcommand)]
+        command: SettingsCommand,
+    },
+    RequestReview {
+        task_id: String,
+    },
+    Approve {
+        task_id: String,
+    },
+    Reject {
+        task_id: String,
+        reason: String,
+    },
+    RequestChanges {
+        task_id: String,
+        instructions: String,
+    },
+    Doctor,
+    SelfCheck,
+    Version,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+enum SourceArg {
+    CodexApp,
+    TogetherChat,
+    CliYaml,
+}
+
+impl From<SourceArg> for ChatSource {
+    fn from(value: SourceArg) -> Self {
+        match value {
+            SourceArg::CodexApp => ChatSource::CodexApp,
+            SourceArg::TogetherChat => ChatSource::TogetherChat,
+            SourceArg::CliYaml => ChatSource::CliYaml,
+        }
+    }
+}
+
+#[derive(Subcommand)]
+enum ProposalCommand {
+    Confirm { id: String },
+    Reject { id: String },
+}
+
+#[derive(Subcommand)]
+enum SettingsCommand {
+    Get {
+        #[arg(long)]
+        json: bool,
+    },
+    Set {
+        #[arg(long)]
+        theme: Option<String>,
+        #[arg(long)]
+        bg: Option<String>,
+        #[arg(long)]
+        main: Option<String>,
+    },
+    Reset,
 }
 
 fn run_task(file: &str) {
@@ -47,6 +127,10 @@ fn run_task(file: &str) {
         match resp {
             Response::Ack { task_id } => println!("Task created: {}", task_id),
             Response::Proposal { proposal_id } => println!("Proposal created: {}", proposal_id),
+            Response::Settings { settings } => {
+                println!("{}", serde_json::to_string_pretty(&settings).unwrap())
+            }
+            Response::Status { json } => println!("{json}"),
             Response::Error { message } => eprintln!("Error: {}", message),
         }
     } else {
@@ -119,6 +203,88 @@ fn ensure_daemon() -> Result<(), std::io::Error> {
     ))
 }
 
+fn send_command(command: Command) -> Result<Response, std::io::Error> {
+    let cmd_str = format!("{}\n", serde_json::to_string(&command).unwrap());
+    let resp = client::send_command(client::DEFAULT_SOCKET_NAME, &cmd_str)?;
+    serde_json::from_str::<Response>(&resp)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))
+}
+
+fn print_response(response: Response) {
+    match response {
+        Response::Ack { task_id } => println!("OK: {task_id}"),
+        Response::Proposal { proposal_id } => println!("Proposal created: {proposal_id}"),
+        Response::Settings { settings } => {
+            println!("{}", serde_json::to_string_pretty(&settings).unwrap())
+        }
+        Response::Status { json } => println!("{json}"),
+        Response::Error { message } => {
+            eprintln!("Error: {message}");
+            std::process::exit(1);
+        }
+    }
+}
+
+fn run_command(command: Command) {
+    if let Err(err) = ensure_daemon() {
+        eprintln!("Failed to auto-start daemon: {}", err);
+        std::process::exit(1);
+    }
+    match send_command(command) {
+        Ok(response) => print_response(response),
+        Err(e) => {
+            eprintln!("Failed to connect to daemon: {}", e);
+            std::process::exit(1);
+        }
+    }
+}
+
+fn run_settings(command: &SettingsCommand) {
+    match command {
+        SettingsCommand::Get { .. } => run_command(Command::GetSettings),
+        SettingsCommand::Set { theme, bg, main } => {
+            if let Err(err) = ensure_daemon() {
+                eprintln!("Failed to auto-start daemon: {}", err);
+                std::process::exit(1);
+            }
+            let mut settings = match send_command(Command::GetSettings) {
+                Ok(Response::Settings { settings }) => settings,
+                _ => UiSettings::default(),
+            };
+            if let Some(theme) = theme {
+                settings.theme_preset = theme.clone();
+            }
+            if let Some(bg) = bg {
+                settings.custom_bg = Some(bg.clone());
+            }
+            if let Some(main) = main {
+                settings.custom_main = Some(main.clone());
+            }
+            run_command(Command::UpdateSettings { settings });
+        }
+        SettingsCommand::Reset => run_command(Command::UpdateSettings {
+            settings: UiSettings::default(),
+        }),
+    }
+}
+
+fn run_doctor() {
+    if ensure_daemon().is_ok() {
+        println!("daemon: ready");
+    } else {
+        println!("daemon: not ready");
+    }
+    println!(
+        "binary: {}",
+        std::env::current_exe().unwrap_or_default().display()
+    );
+}
+
+fn run_self_check() {
+    run_doctor();
+    run_command(Command::GetStatus);
+}
+
 fn main() {
     let cli = Cli::parse();
     match &cli.command {
@@ -163,6 +329,42 @@ fn main() {
                 }
             }
         }
+        Some(Commands::Chat { source, text }) => {
+            run_command(Command::SubmitChat {
+                source: (*source).into(),
+                text: text.clone(),
+            });
+        }
+        Some(Commands::Proposal { command }) => match command {
+            ProposalCommand::Confirm { id } => run_command(Command::ConfirmProposal {
+                proposal_id: id.clone(),
+            }),
+            ProposalCommand::Reject { id } => run_command(Command::RejectProposal {
+                proposal_id: id.clone(),
+            }),
+        },
+        Some(Commands::Status { .. }) => run_command(Command::GetStatus),
+        Some(Commands::Settings { command }) => run_settings(command),
+        Some(Commands::RequestReview { task_id }) => run_command(Command::RequestReview {
+            task_id: task_id.clone(),
+        }),
+        Some(Commands::Approve { task_id }) => run_command(Command::ApproveTask {
+            task_id: task_id.clone(),
+        }),
+        Some(Commands::Reject { task_id, reason }) => run_command(Command::RejectTask {
+            task_id: task_id.clone(),
+            reason: reason.clone(),
+        }),
+        Some(Commands::RequestChanges {
+            task_id,
+            instructions,
+        }) => run_command(Command::RequestChanges {
+            task_id: task_id.clone(),
+            instructions: instructions.clone(),
+        }),
+        Some(Commands::Doctor) => run_doctor(),
+        Some(Commands::SelfCheck) => run_self_check(),
+        Some(Commands::Version) => println!("together {}", env!("CARGO_PKG_VERSION")),
         None => {
             if let Err(err) = ensure_daemon() {
                 eprintln!("Failed to auto-start daemon: {}", err);

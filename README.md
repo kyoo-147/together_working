@@ -72,6 +72,44 @@ It is not:
 - a replacement for Claude, Codex, Gemini, Amp, or other workers
 - only an agent scanner
 
+## Production Quickstart
+
+For customers who just want to run Together:
+
+```powershell
+git clone https://github.com/kyoo-147/together_working.git
+cd together_working
+cargo build -p cli --release
+target\release\together.exe
+```
+
+The terminal app auto-starts the local daemon, opens the Monitor + Chat Dock UI, and writes runtime state under `.together/`.
+
+Useful CLI commands:
+
+```powershell
+target\release\together.exe doctor
+target\release\together.exe status --json
+target\release\together.exe chat --source codex-app "create a scoped landing page task"
+target\release\together.exe proposal confirm <proposal-id>
+target\release\together.exe settings set --theme "Ocean Blue"
+```
+
+Windows install/package helpers:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -AddToPath
+powershell -ExecutionPolicy Bypass -File scripts\package-windows.ps1
+```
+
+Codex skill bridge:
+
+```powershell
+python skills\together\scripts\submit-chat.py "create a scoped task for the landing page"
+```
+
+The older Python scan/report commands remain available as compatibility tools for readiness reports.
+
 ## Sweet Potato Architecture
 
 - One potato: Codex

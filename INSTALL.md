@@ -1,6 +1,46 @@
 # Install
 
-## Install skill
+## Install Together terminal app on Windows
+
+From a fresh clone:
+
+```powershell
+git clone https://github.com/kyoo-147/together_working.git
+cd together_working
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -AddToPath
+```
+
+Open a new terminal and run:
+
+```powershell
+together
+```
+
+If you do not want PATH changes:
+
+```powershell
+target\release\together.exe
+```
+
+## Verify install
+
+```powershell
+together doctor
+together status --json
+together self-check
+```
+
+## Codex skill bridge
+
+After the binary is installed or built, Codex can submit work into the local daemon through:
+
+```powershell
+python skills\together\scripts\submit-chat.py "create a scoped task for README polish"
+```
+
+The Together TUI will show the same chat/proposal/task events.
+
+## Install legacy skill package
 
 ```bash
 npx skills add https://github.com/kyoo-147/together_working
@@ -13,6 +53,8 @@ npx skills add https://github.com/kyoo-147/together_working --skill "together"
 ```
 
 ## Quick commands
+
+These Python commands are compatibility tools for scanner/report workflows.
 
 Scan:
 

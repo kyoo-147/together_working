@@ -54,9 +54,20 @@ Skip for tiny one-shot tasks.
 7. Verify scope compliance before merge.
 8. Integrate back into Codex.
 
+## Daemon bridge
+
+When the Together terminal app is installed or built, submit Codex-side requests into the shared daemon event log:
+
+```bash
+python skills/together/scripts/submit-chat.py "create a scoped task for this request"
+```
+
+This creates a daemon proposal with source `CodexApp`. The terminal TUI can then show the proposal, route decision, worker output, verification, and review state.
+
 ## Commands
 
 ```bash
+python skills/together/scripts/submit-chat.py "create a scoped task"
 python skills/together/scripts/discover-agents.py --format table
 python skills/together/scripts/write-registry.py
 python skills/together/scripts/doctor.py

@@ -18,13 +18,13 @@ use std::time::Duration;
 use crate::client;
 use crate::ui::format::{self, themed_base_style, themed_panel_block, themed_selected_style};
 use crate::ui::layout::{cockpit_areas, ViewportClass};
-use crate::ui::state::TuiState;
+use crate::ui::state::{TaskView, TuiState};
 use crate::ui::theme::{presets, theme_from_settings, Theme};
 use crate::ui::wizard::ContractWizard;
 use crate::ui::{agents, pty, tasks};
 use core::chat::ChatSource;
 use core::ipc::{Command, Response};
-use core::settings::UiSettings;
+use core::settings::{is_valid_hex_color, UiSettings};
 
 struct TerminalGuard;
 
@@ -483,6 +483,12 @@ fn draw_settings_panel(f: &mut Frame, area: Rect, settings: &SettingsPanel, them
             Style::default().fg(theme.text).bg(theme.panel),
         ),
     ]));
+    if let Some(error) = settings.validation_error.as_deref() {
+        lines.push(Line::from(Span::styled(
+            error.to_string(),
+            Style::default().fg(theme.danger).bg(theme.panel),
+        )));
+    }
 
     f.render_widget(
         Paragraph::new(lines)
@@ -507,7 +513,7 @@ fn draw_command_bar(
         (ViewportClass::Compact, Mode::ChatInput) => "Enter send | Ctrl+Enter confirm | Esc",
         (ViewportClass::Compact, Mode::Settings) => "j/k theme | b/m color | Enter apply | Esc",
         (_, Mode::Navigate) => {
-            "n new task | / ask | s settings | j/k select | Enter focus PTY | q quit"
+            "n new task | / ask | 1-5 views | s settings | j/k select | Enter focus PTY | q quit"
         }
         (_, Mode::PtyFocus) => "typing sends input | Enter newline | Esc detach",
         (_, Mode::ChatInput) => "Enter send chat | Ctrl+Enter confirm proposal | Esc cancel",
@@ -566,6 +572,11 @@ fn handle_key(
             }
             KeyCode::Down | KeyCode::Char('j') => state.select_next_task(),
             KeyCode::Up | KeyCode::Char('k') => state.select_previous_task(),
+            KeyCode::Char('1') => state.set_view(TaskView::Monitor),
+            KeyCode::Char('2') => state.set_view(TaskView::Diff),
+            KeyCode::Char('3') => state.set_view(TaskView::Review),
+            KeyCode::Char('4') => state.set_view(TaskView::Verify),
+            KeyCode::Char('5') => state.set_view(TaskView::Logs),
             KeyCode::Enter if state.selected_task_id.is_some() => {
                 *mode = Mode::PtyFocus;
                 *status = "PTY focus active".to_string();
@@ -665,8 +676,12 @@ fn handle_key(
             }
             KeyCode::Backspace if settings.is_editing() => settings.backspace(),
             KeyCode::Enter => {
-                if settings.is_editing() {
-                    settings.commit_edit();
+                if settings.is_editing() && !settings.commit_edit() {
+                    *status = settings
+                        .validation_error
+                        .clone()
+                        .unwrap_or_else(|| "invalid settings".to_string());
+                    return Ok(false);
                 }
                 update_settings(&settings.current_settings(), status)?;
             }
@@ -698,6 +713,12 @@ fn dispatch_contract(wizard: &ContractWizard, status: &mut String) -> Result<(),
         Ok(Response::Proposal { proposal_id }) => {
             *status = format!("proposal {proposal_id}");
         }
+        Ok(Response::Settings { .. }) => {
+            *status = "settings response received".to_string();
+        }
+        Ok(Response::Status { json }) => {
+            *status = format!("status {json}");
+        }
         Ok(Response::Error { message }) => {
             *status = format!("dispatch failed: {message}");
         }
@@ -724,6 +745,12 @@ fn submit_chat(chat_input: &str, status: &mut String) -> Result<(), io::Error> {
         Response::Ack { task_id } => {
             *status = format!("chat accepted {task_id}");
         }
+        Response::Settings { .. } => {
+            *status = "settings response received".to_string();
+        }
+        Response::Status { json } => {
+            *status = format!("status {json}");
+        }
     }
     Ok(())
 }
@@ -745,6 +772,12 @@ fn confirm_latest_proposal(state: &TuiState, status: &mut String) -> Result<(), 
         }
         Response::Error { message } => {
             *status = format!("confirm failed: {message}");
+        }
+        Response::Settings { .. } => {
+            *status = "settings response received".to_string();
+        }
+        Response::Status { json } => {
+            *status = format!("status {json}");
         }
     }
     Ok(())
@@ -768,6 +801,12 @@ fn reject_latest_proposal(state: &TuiState, status: &mut String) -> Result<(), i
         Response::Error { message } => {
             *status = format!("reject failed: {message}");
         }
+        Response::Settings { .. } => {
+            *status = "settings response received".to_string();
+        }
+        Response::Status { json } => {
+            *status = format!("status {json}");
+        }
     }
     Ok(())
 }
@@ -785,6 +824,12 @@ fn update_settings(settings: &UiSettings, status: &mut String) -> Result<(), io:
         }
         Response::Error { message } => {
             *status = format!("settings failed: {message}");
+        }
+        Response::Settings { .. } => {
+            *status = "settings response received".to_string();
+        }
+        Response::Status { json } => {
+            *status = format!("status {json}");
         }
     }
     Ok(())
@@ -804,6 +849,7 @@ struct SettingsPanel {
     custom_main: Option<String>,
     editing: Option<CustomField>,
     edit_buffer: String,
+    validation_error: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -824,6 +870,7 @@ impl SettingsPanel {
             custom_main: settings.custom_main.clone(),
             editing: None,
             edit_buffer: String::new(),
+            validation_error: None,
         }
     }
 
@@ -865,6 +912,7 @@ impl SettingsPanel {
     }
 
     fn start_edit(&mut self, field: CustomField) {
+        self.validation_error = None;
         self.editing = Some(field);
         self.edit_buffer = match field {
             CustomField::Bg => self.custom_bg.clone(),
@@ -878,11 +926,15 @@ impl SettingsPanel {
         self.edit_buffer.clear();
     }
 
-    fn commit_edit(&mut self) {
+    fn commit_edit(&mut self) -> bool {
         let value = self.edit_buffer.trim().to_string();
         let value = if value == "#" || value.is_empty() {
             None
         } else {
+            if !is_valid_hex_color(&value) {
+                self.validation_error = Some("custom colors must use #RRGGBB".to_string());
+                return false;
+            }
             Some(value)
         };
         match self.editing {
@@ -890,7 +942,9 @@ impl SettingsPanel {
             Some(CustomField::Main) => self.custom_main = value,
             None => {}
         }
+        self.validation_error = None;
         self.cancel_edit();
+        true
     }
 
     fn backspace(&mut self) {
@@ -914,5 +968,50 @@ impl SettingsPanel {
                 CustomField::Main => self.custom_main.as_deref().unwrap_or("none"),
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ratatui::backend::TestBackend;
+
+    #[test]
+    fn renders_target_terminal_sizes_without_panic() {
+        let sizes = [(110, 30), (100, 28), (84, 24), (72, 20), (60, 18)];
+
+        for (width, height) in sizes {
+            let backend = TestBackend::new(width, height);
+            let mut terminal = Terminal::new(backend).unwrap();
+            let state = TuiState::default();
+            let wizard = ContractWizard::new();
+            let settings = SettingsPanel::from_settings(&state.settings);
+
+            terminal
+                .draw(|f| draw_cockpit(f, Mode::Navigate, &state, &wizard, "", &settings, "ready"))
+                .unwrap();
+
+            let buffer = terminal.backend().buffer();
+            let rendered = buffer
+                .content
+                .iter()
+                .map(|cell| cell.symbol())
+                .collect::<String>();
+            assert!(rendered.contains("together"));
+            assert!(rendered.contains("q quit") || rendered.contains("q"));
+        }
+    }
+
+    #[test]
+    fn settings_panel_rejects_invalid_hex_until_saved() {
+        let mut panel = SettingsPanel::from_settings(&UiSettings::default());
+
+        panel.start_edit(CustomField::Bg);
+        for ch in "#XYZXYZ".chars() {
+            panel.push_char(ch);
+        }
+        panel.commit_edit();
+
+        assert_eq!(panel.current_settings().custom_bg, None);
     }
 }

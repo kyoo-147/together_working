@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 pub enum Command {
     Sub,
     CreateTask { yaml: String },
+    SendInput { task_id: String, input: String },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

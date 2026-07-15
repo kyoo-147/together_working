@@ -1,62 +1,128 @@
-# 00 — Product Brief
+# 00 - Product Brief
 
-## Tên sản phẩm
+## Product Name
+
 Together
 
-## Một câu mô tả
-Together là lớp điều phối local-first biến nhiều AI coding agent CLI thành một phòng ban có cấu trúc, có routing, ranh giới nhiệm vụ, review, verification, fallback và quyền merge cuối cùng.
+## One-Line Description
 
-## Vấn đề
-Developer đang sử dụng Codex, Claude Code, Gemini CLI, OpenCode, Amp và các agent khác theo kiểu từng phiên chat riêng lẻ. Kết quả là:
-- context phình to;
-- agent nhận quá nhiều dữ liệu;
-- khó biết agent nào sẵn sàng;
-- không có contract rõ ràng;
-- review và verification rời rạc;
-- khi agent lỗi, workflow dừng;
-- quyền tích hợp cuối cùng không rõ.
+Together is a local-first CLI/TUI operator console that lets developers keep working in Codex while observing, routing, verifying, and reviewing the AI worker activity behind the scenes.
 
-## Giải pháp
-Together:
-1. phát hiện agent CLI đã cài;
-2. kiểm tra readiness;
-3. nhóm agent thành department;
-4. tạo task contract;
-5. route task theo capability, load và policy;
-6. chạy agent trong PTY thật;
-7. theo dõi trạng thái và log;
-8. review và verify output;
-9. fallback nếu agent lỗi;
-10. chỉ tích hợp khi được phê duyệt.
+## Current Product Direction
 
-## Đối tượng
-- developer dùng nhiều coding agent;
-- indie hacker;
-- team kỹ thuật local-first;
-- nhóm cần audit, policy và human approval;
-- nhóm muốn terminal-first workflow.
+Together has moved beyond a Python skill/report prototype. The current product surface is a terminal-native app:
 
-## Định vị
-- Không phải chat app.
-- Không phải tmux replacement.
-- Không phải workflow canvas tổng quát.
-- Là **department orchestrator for agent work**.
+- `together` starts or connects to the local daemon.
+- The TUI shows Project, Tasks, Task Monitor, Live Work Feed, Agents, Needs Attention, Settings, and Chat Dock.
+- Codex app / skill requests and Together chat requests flow through the same daemon protocol.
+- The daemon owns state, routing, proposals, review, verification, settings, and worker lifecycle.
+- The TUI is a thin client that renders events and sends commands.
 
-## Khác biệt với Herdr
-Herdr là agent-aware terminal multiplexer: workspaces, tabs, panes, PTY, detach/reattach, remote attach và socket API. Together nên học runtime terminal-native của Herdr nhưng lấy domain trung tâm là workspace → department → task → execution → review → verification → integration. citeturn626344view0turn582266search5
+The near-term product is not "another chat app." Codex remains the primary conversation and integration surface. Together is the monitor, control plane, and evidence layer around that work.
 
-## North-star experience
-Người dùng chạy:
+## Problem
 
-```bash
+Developers increasingly use several coding agents across Codex, Claude, Gemini, OpenCode, Amp, and local CLIs. The work becomes hard to operate when:
+
+- context grows too large;
+- worker readiness is unclear;
+- task scope is implicit;
+- file permissions are not enforced;
+- review and verification happen too late;
+- provider failures stop the workflow;
+- agent output lacks durable evidence;
+- it is hard to know which worker changed which files.
+
+## Solution
+
+Together makes AI work observable and governed:
+
+1. discover installed agents;
+2. probe readiness and mark degraded workers without crashing the flow;
+3. create scoped task contracts;
+4. route work through deterministic scoring;
+5. spawn real workers in PTYs;
+6. stream worker output into the TUI;
+7. accept chat requests from Codex skill/app and the Together chat dock;
+8. create proposals before mutating state;
+9. verify diff scope and denied-file rules;
+10. block approval when verification fails;
+11. record local events, settings, and runtime artifacts.
+
+## Target Users
+
+- developers using Codex plus one or more local AI coding CLIs;
+- teams dogfooding multi-agent development workflows;
+- local-first engineering teams that need auditability and control;
+- builders comparing single-agent versus governed multi-worker workflows.
+
+## Positioning
+
+Together is:
+
+- a Codex operator console;
+- a local AI worker control plane;
+- a task contract and verification layer;
+- a routing and fallback layer;
+- a measurement loop for real developer sessions.
+
+Together is not:
+
+- a Codex replacement;
+- a general terminal multiplexer;
+- a fully autonomous enterprise scheduler;
+- a finished RBAC/audit/compliance platform.
+
+## North-Star Experience
+
+The user runs:
+
+```powershell
 together
 ```
 
-và thấy ngay:
-- department nào hoạt động;
-- agent nào ready/busy/degraded;
-- task nào đang chạy;
-- PTY output trực tiếp;
-- verification gate;
-- fallback event;
-- approve/reject/reroute/merge.
+and sees:
+
+- which project and source are active;
+- which tasks are queued, running, blocked, or awaiting review;
+- which agents are ready, running, degraded, or offline;
+- why a worker was selected;
+- live PTY output from the worker;
+- what needs attention now;
+- whether verification passed or blocked approval;
+- a chat dock for asking Codex/Together to create or inspect work.
+
+## Current Implementation Status
+
+The product currently includes:
+
+- daemon auto-start/connect path;
+- Monitor + Chat Dock TUI;
+- CLI commands for chat, proposals, status, settings, doctor, and review actions;
+- skill bridge helper for Codex-sourced chat submission;
+- deterministic and assisted proposal parser shape;
+- review and approval gate state;
+- settings/theme presets with custom colors;
+- responsive terminal render paths;
+- Windows-first build, install, and package scripts;
+- release checks and bridge tests.
+
+## Active Dogfooding Questions
+
+The current development loop should measure and improve:
+
+- how quickly users understand the TUI;
+- whether chat-first task creation is simpler than forms;
+- whether Needs Attention highlights the right interventions;
+- how often Codex is degraded and which fallback works best;
+- how much routing visibility is useful without clutter;
+- whether scope verification blocks the right failures;
+- how much time Together adds or saves compared with Codex-only work.
+
+## Roadmap Shape
+
+1. Local CLI/TUI operator console.
+2. Dogfooding and benchmark measurement loop.
+3. Team control plane with shared policy templates.
+4. CI, PR, and review integrations.
+5. Enterprise AI workforce platform with RBAC, audit, budgets, sandboxing, and adaptive routing.

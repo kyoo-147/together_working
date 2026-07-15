@@ -5,19 +5,19 @@
 <h1 align="center">together</h1>
 
 <p align="center">
-  <strong>Sweet Potato Architecture for local AI departments.</strong>
+  <strong>Local Codex operator console for observable AI worker teams.</strong>
 </p>
 
 <p align="center">
-  AI departments, not AI chats.
+  Chat in Codex. Watch the work in Together. Route, verify, review, and recover locally.
 </p>
 
 <p align="center">
-  Together manages agents. It does not replace them.
+  Together is a terminal-native control plane for scoped AI work, live worker output, agent readiness, review gates, and local-first execution history.
 </p>
 
 <p align="center">
-  Codex plans, coordinates, verifies, and integrates.
+  Codex stays the preferred integrator. Worker agents stay replaceable, scoped, and observable.
 </p>
 
 <p align="center">
@@ -46,31 +46,75 @@
 </p>
 
 <p align="center">
-  One potato. Many workers. Small tasks. Big outcomes.
-</p>
-
-<p align="center">
-  Small contexts. Specialized workers. Better outcomes.
-</p>
-
-<p align="center">
-  <img src="docs/assets/generated/together-hero.png" alt="Together hero" width="100%">
+  <img src="docs/assets/screenshots/main.png" alt="Together Monitor and Chat Dock" width="100%">
 </p>
 
 ## Product One-Liner
 
-Together is AI Department Operating System for local AI worker teams.
+Together is a local-first CLI/TUI control plane that lets developers keep working in Codex while seeing, routing, verifying, and reviewing the AI worker activity behind the scenes.
+
+It is currently a dogfooding-stage operator console:
+- `together` starts or connects to a local daemon.
+- The terminal UI shows Project, Tasks, Task Monitor, Live Work Feed, Agents, Needs Attention, and Chat Dock.
+- Codex app / skill requests and Together chat requests flow into the same daemon event log.
+- Worker selection is deterministic and observable.
+- Task contracts define scope, allowed files, denied files, deliverables, and success criteria.
+- Verification and approval gates block unsafe or out-of-scope work.
+- Settings, theme presets, status, review, and packaging commands are available from the CLI.
+
+Longer-term, Together aims to become an AI Department Operating System for local and team AI worker workflows. The current product surface is the CLI/TUI operator cockpit.
 
 It is:
-- agent control plane
-- work governance layer
-- verification layer
-- local routing and failover layer
+- a terminal-native monitor for Codex-led AI work
+- an agent control plane
+- a work governance layer
+- a verification and review gate
+- a local routing and failover layer
+- a measurement loop for real developer sessions
 
 It is not:
-- another agent
-- a replacement for Claude, Codex, Gemini, Amp, or other workers
-- only an agent scanner
+- another AI assistant
+- a replacement for Codex, Claude, Gemini, Amp, OpenCode, or other workers
+- a generic terminal multiplexer
+- a claim of finished enterprise orchestration
+
+## Screenshots
+
+### Monitor + Chat Dock
+
+<p align="center">
+  <img src="docs/assets/screenshots/main.png" alt="Together main monitor and chat dock" width="100%">
+</p>
+
+### Featured Views
+
+| Task Monitor | Tasks |
+| --- | --- |
+| <img src="docs/assets/screenshots/task-monitor.png" alt="Together task monitor view"> | <img src="docs/assets/screenshots/tasks.png" alt="Together tasks view"> |
+
+| Task Detail | Settings |
+| --- | --- |
+| <img src="docs/assets/screenshots/task.png" alt="Together task detail view"> | <img src="docs/assets/screenshots/settings.png" alt="Together settings view"> |
+
+### Analysis Gallery
+
+These mockups and analysis visuals capture the product direction behind the current interface.
+
+| Architecture | Governance |
+| --- | --- |
+| <img src="docs/assets/screenshots/gallery/ig_0c3348605260254a016a43c65f2070819185dc5505c6b2e466.png" alt="Together architecture analysis"> | <img src="docs/assets/screenshots/gallery/ig_0c3348605260254a016a43c6fb027c819186fdbf8b848223ce.png" alt="Together governance analysis"> |
+
+| Department Flow | Operations |
+| --- | --- |
+| <img src="docs/assets/screenshots/gallery/ig_0c3348605260254a016a43c7a1fb008191a320090ab8e6ca48.png" alt="Together department flow analysis"> | <img src="docs/assets/screenshots/gallery/ig_0c3348605260254a016a43c7ed5c188191ac833eaa5caea74c.png" alt="Together operations artifact analysis"> |
+
+| Registry | Failover |
+| --- | --- |
+| <img src="docs/assets/screenshots/gallery/ig_0d9adc1b6e3c90e0016a43cc1a99dc81999c5a2ec678a810e6.png" alt="Together registry analysis"> | <img src="docs/assets/screenshots/gallery/ig_0d9adc1b6e3c90e0016a43ccb6cd908199845b36c89146595e.png" alt="Together failover analysis"> |
+
+| Hero Concept | Ready-State Model |
+| --- | --- |
+| <img src="docs/assets/screenshots/gallery/ig_0ac88ff4250ab237016a43c5786460819188771f1ede00c55e.png" alt="Together hero concept analysis"> | <img src="docs/assets/screenshots/gallery/ig_0d9adc1b6e3c90e0016a43cc6dbe3c81998d77c9891d148ffe.png" alt="Together ready-state analysis"> |
 
 ## Production Quickstart
 
@@ -110,12 +154,14 @@ python skills\together\scripts\submit-chat.py "create a scoped task for the land
 
 The older Python scan/report commands remain available as compatibility tools for readiness reports.
 
-## Sweet Potato Architecture
+## Product Principles
 
-- One potato: Codex
-- Many potato workers: agents
-- Small potato tasks
-- Big potato outcome
+Together is built around a simple operating model:
+- Codex is the preferred integrator.
+- Workers are scoped and replaceable.
+- Tasks are small enough to verify.
+- Runtime state is observable.
+- Approval depends on evidence, not trust.
 
 Why this exists:
 - giant contexts grow too expensive
@@ -285,21 +331,25 @@ Permission model:
 
 Codex defaults to Integrator.
 
-What v0.5 enforces now:
+What the current CLI/TUI product enforces now:
 - task contract validation
 - git diff changed-file capture
 - scope guard
 - file policy validation
 - verification artifacts
 - quality gate
-- merge decision artifacts
-- warn and strict rollout modes
+- review and approval gate state
+- daemon-owned settings and status
+- proposal confirmation before mutation
+- PTY-backed worker execution path
+- degraded-agent fallback
 
-What v0.5 does not do yet:
-- autonomous task execution runner
-- automatic agent sandbox execution
+What it does not do yet:
+- distributed scheduling
+- full enterprise RBAC or centralized audit
+- adaptive routing trained on long execution history
+- automatic agent sandboxing beyond local process/worktree boundaries
 - automatic commit or PR creation
-- distributed scheduler
 
 ## Department Workflow
 
@@ -398,14 +448,18 @@ Committed templates:
 ## Roadmap
 
 Near-term:
-- stronger test coverage around routing and report generation
-- more provider examples and safer public docs
-- better release automation
+- dogfood the Monitor + Chat Dock UI in real developer sessions
+- improve benchmark and telemetry capture for task latency, fallback, verification, and retries
+- polish review, diff, settings, and compact terminal views
+- strengthen Codex skill/app bridge documentation
+- expand provider adapter tests and readiness diagnostics
 
 Later:
-- optional packaging improvements
-- richer observability diffs
-- more reusable orchestration helpers outside the skill layer
+- team policy templates
+- CI and PR integration
+- richer execution history and adaptive routing
+- optional sandbox profiles
+- multi-machine worker pools
 
 ## Limits
 

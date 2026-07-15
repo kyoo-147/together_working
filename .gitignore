@@ -11,6 +11,8 @@ skills/together/data/latest-registry.json
 .together/tasks/*.merge.json
 !.together/tasks/.gitkeep
 .together/runtime-state.json
+.together/events.db
+.together/settings.json
 benchmarks/results/*
 !benchmarks/results/.gitkeep
 benchmarks/reports/*
